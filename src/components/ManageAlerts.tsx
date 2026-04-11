@@ -145,7 +145,7 @@ function CreateAlert({
   onSave,
 }: {
   onBack: () => void;
-  onSave: (data: Omit<PriceAlert, "id" | "createdAt">) => void;
+  onSave: (data: Omit<PriceAlert, "id" | "createdAt" | "triggered">) => void;
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<SelectedTicker | null>(null);

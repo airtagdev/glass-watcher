@@ -117,11 +117,9 @@ export function AppLoader({ children }: AppLoaderProps) {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 px-8">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
-          <TrendingUp className="w-6 h-6 text-primary" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground">TickerWatch</h1>
+      <div className="flex flex-col items-center gap-4 mb-8">
+        <img src={tradexLogo} alt="Tradex" className="w-24 h-24 rounded-2xl" />
+        <p className="text-xs text-muted-foreground tracking-widest uppercase">Trade Smarter. Invest Better.</p>
       </div>
 
       <div className="w-full max-w-xs space-y-3">

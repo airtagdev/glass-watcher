@@ -125,6 +125,8 @@ export default function HomePage() {
           onClose={() => setSelectedCrypto(null)}
         />
       )}
+
+      {showAlerts && <ManageAlerts onClose={() => setShowAlerts(false)} />}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useCryptoSearch, useCryptoDetail, CryptoTicker } from "@/hooks/useCrypt
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerDetail } from "@/components/TickerDetail";
 import { Input } from "@/components/ui/input";
-import { Search as SearchIcon, TrendingUp, Bitcoin, Star } from "lucide-react";
+import { Search as SearchIcon, TrendingUp, Bitcoin, Plus, Check } from "lucide-react";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -82,11 +82,13 @@ export default function SearchPage() {
                       e.stopPropagation();
                       handleToggleStock(r.symbol, r.shortname);
                     }}
-                    className="p-1.5"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      watched
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    <Star
-                      className={`w-4 h-4 transition-colors ${watched ? "fill-primary text-primary" : "text-muted-foreground"}`}
-                    />
+                    {watched ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   </button>
                 </div>
               );
@@ -126,11 +128,13 @@ export default function SearchPage() {
                       e.stopPropagation();
                       handleToggleCrypto(r.id, r.symbol, r.name);
                     }}
-                    className="p-1.5"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      watched
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    <Star
-                      className={`w-4 h-4 transition-colors ${watched ? "fill-primary text-primary" : "text-muted-foreground"}`}
-                    />
+                    {watched ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   </button>
                 </div>
               );

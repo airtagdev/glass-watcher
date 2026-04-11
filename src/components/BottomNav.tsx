@@ -1,13 +1,13 @@
-import { Home, TrendingUp, Bitcoin, Search, Newspaper, Sparkles } from "lucide-react";
+import { Home, TrendingUp, Bitcoin, Newspaper, Flame, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/stocks", icon: TrendingUp, label: "Stocks" },
   { path: "/crypto", icon: Bitcoin, label: "Crypto" },
-  { path: "/search", icon: Search, label: "Search" },
   { path: "/news", icon: Newspaper, label: "News" },
-  { path: "/ai", icon: Sparkles, label: "AI" },
+  { path: "/trending", icon: Flame, label: "Trending" },
+  { path: "/search", icon: Search, label: "Search" },
 ];
 
 export function BottomNav() {

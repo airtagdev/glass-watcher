@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp } from "lucide-react";
+import tradexLogo from "@/assets/tradex-logo.png";
 
 const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V"];
 

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { X, Plus, Bell, Trash2, Search as SearchIcon, ChevronDown } from "lucide-react";
+import { X, Plus, Bell, Trash2, Search as SearchIcon, ChevronDown, BellRing } from "lucide-react";
 import { useAlerts, PriceAlert } from "@/hooks/useAlerts";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface ManageAlertsProps {
   onClose: () => void;
@@ -17,7 +19,8 @@ type SelectedTicker = {
 };
 
 export function ManageAlerts({ onClose }: ManageAlertsProps) {
-  const { alerts, addAlert, removeAlert } = useAlerts();
+  const { alerts, loading, addAlert, removeAlert } = useAlerts();
+  const { permission, isSubscribed, subscribe } = usePushNotifications();
   const [view, setView] = useState<"list" | "create">("list");
 
   return (
@@ -30,17 +33,32 @@ export function ManageAlerts({ onClose }: ManageAlertsProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {view === "list" ? (
-          <AlertList
-            alerts={alerts}
-            onRemove={removeAlert}
-            onClose={onClose}
-            onCreate={() => setView("create")}
-          />
+          <>
+            {!isSubscribed && permission !== "denied" && (
+              <button
+                onClick={async () => {
+                  const ok = await subscribe();
+                  if (ok) toast.success("Notifications enabled!");
+                  else toast.error("Could not enable notifications");
+                }}
+                className="w-full mb-4 py-3 rounded-xl glass flex items-center justify-center gap-2 text-sm font-semibold text-primary"
+              >
+                <BellRing className="w-4 h-4" />
+                Enable Push Notifications
+              </button>
+            )}
+            <AlertList
+              alerts={alerts}
+              onRemove={removeAlert}
+              onClose={onClose}
+              onCreate={() => setView("create")}
+            />
+          </>
         ) : (
           <CreateAlert
             onBack={() => setView("list")}
-            onSave={(data) => {
-              addAlert(data);
+            onSave={async (data) => {
+              await addAlert(data);
               setView("list");
             }}
           />

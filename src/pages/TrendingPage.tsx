@@ -83,39 +83,50 @@ export default function TrendingPage() {
           return (
             <div
               key={item.id}
-              className="glass-card p-3 flex flex-col justify-between aspect-square rounded-2xl relative"
+              className="glass-card p-4 flex flex-col justify-between aspect-square rounded-2xl relative"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.symbol} className="w-7 h-7 rounded-full shrink-0" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[9px] font-bold shrink-0">
-                      {item.symbol.slice(0, 2)}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground truncate">{item.symbol}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{item.name}</p>
+              {/* Type badge */}
+              <span className={`absolute top-2.5 right-2.5 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                item.type === "crypto"
+                  ? "bg-primary/15 text-primary"
+                  : "bg-accent text-accent-foreground"
+              }`}>
+                {item.type === "crypto" ? "Crypto" : "Stock"}
+              </span>
+
+              {/* Icon + Name */}
+              <div className="flex items-center gap-3">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.symbol} className="w-10 h-10 rounded-full shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold shrink-0">
+                    {item.symbol.slice(0, 2)}
                   </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-foreground truncate">{item.symbol}</p>
+                  <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                </div>
+              </div>
+
+              {/* Price + Change + Watchlist */}
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-xl font-bold text-foreground">{formatCurrency(item.price)}</p>
+                  <p className={`text-sm font-semibold ${isPositive ? "text-gain" : "text-loss"}`}>
+                    {formatPercent(item.changePercent)}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleToggle(item)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                     watched
                       ? "bg-primary/20 text-primary"
                       : "bg-secondary text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {watched ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                  {watched ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 </button>
-              </div>
-
-              <div>
-                <p className="text-lg font-bold text-foreground">{formatCurrency(item.price)}</p>
-                <p className={`text-sm font-semibold ${isPositive ? "text-gain" : "text-loss"}`}>
-                  {formatPercent(item.changePercent)}
-                </p>
               </div>
             </div>
           );

@@ -5,10 +5,13 @@ import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { CryptoTicker } from "@/hooks/useCryptoData";
-import { Eye, Sparkles } from "lucide-react";
+import { Eye, Sparkles, Bell } from "lucide-react";
+import { useState as useStateAlerts } from "react";
+import { ManageAlerts } from "@/components/ManageAlerts";
 
 export default function HomePage() {
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist } = useWatchlist();
+  const [showAlerts, setShowAlerts] = useStateAlerts(false);
   const cryptoIds = watchlist.filter((w) => w.type === "crypto").map((w) => w.id);
   const stockSymbols = watchlist.filter((w) => w.type === "stock").map((w) => w.symbol);
 
@@ -32,9 +35,18 @@ export default function HomePage() {
 
   return (
     <div className="px-4 pt-14 pb-24">
-      <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Watchlist</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Watchlist</h1>
+        </div>
+        <button
+          onClick={() => setShowAlerts(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs font-semibold text-foreground"
+        >
+          <Bell className="w-3.5 h-3.5" />
+          Manage Alerts
+        </button>
       </div>
 
       {watchlist.length === 0 ? (
@@ -113,6 +125,8 @@ export default function HomePage() {
           onClose={() => setSelectedCrypto(null)}
         />
       )}
+
+      {showAlerts && <ManageAlerts onClose={() => setShowAlerts(false)} />}
     </div>
   );
 }

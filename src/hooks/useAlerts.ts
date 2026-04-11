@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { getDeviceId } from "@/lib/deviceId";
 
 export interface PriceAlert {
   id: string;
@@ -6,41 +8,69 @@ export interface PriceAlert {
   tickerName: string;
   tickerType: "stock" | "crypto";
   alertType: "price" | "percentage";
-  /** For price alerts: target price. For percentage: the % value */
   value: number;
-  /** For percentage alerts: "increase" or "decrease" */
   direction?: "increase" | "decrease";
+  triggered: boolean;
   createdAt: string;
 }
 
-const STORAGE_KEY = "ticker-alerts";
-
-function loadAlerts(): PriceAlert[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function useAlerts() {
-  const [alerts, setAlerts] = useState<PriceAlert[]>(loadAlerts);
+  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const deviceId = getDeviceId();
+
+  const fetchAlerts = useCallback(async () => {
+    const { data } = await supabase
+      .from("price_alerts")
+      .select("*")
+      .eq("device_id", deviceId)
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      setAlerts(
+        data.map((d: any) => ({
+          id: d.id,
+          tickerSymbol: d.ticker_symbol,
+          tickerName: d.ticker_name,
+          tickerType: d.ticker_type,
+          alertType: d.alert_type,
+          value: Number(d.value),
+          direction: d.direction || undefined,
+          triggered: d.triggered,
+          createdAt: d.created_at,
+        }))
+      );
+    }
+    setLoading(false);
+  }, [deviceId]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts));
-  }, [alerts]);
+    fetchAlerts();
+  }, [fetchAlerts]);
 
-  const addAlert = useCallback((alert: Omit<PriceAlert, "id" | "createdAt">) => {
-    setAlerts((prev) => [
-      ...prev,
-      { ...alert, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
-    ]);
-  }, []);
+  const addAlert = useCallback(
+    async (alert: Omit<PriceAlert, "id" | "createdAt" | "triggered">) => {
+      const { error } = await supabase.from("price_alerts").insert({
+        device_id: deviceId,
+        ticker_symbol: alert.tickerSymbol,
+        ticker_name: alert.tickerName,
+        ticker_type: alert.tickerType,
+        alert_type: alert.alertType,
+        value: alert.value,
+        direction: alert.direction || null,
+      });
+      if (!error) fetchAlerts();
+    },
+    [deviceId, fetchAlerts]
+  );
 
-  const removeAlert = useCallback((id: string) => {
-    setAlerts((prev) => prev.filter((a) => a.id !== id));
-  }, []);
+  const removeAlert = useCallback(
+    async (id: string) => {
+      await supabase.from("price_alerts").delete().eq("id", id);
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
+    },
+    []
+  );
 
-  return { alerts, addAlert, removeAlert };
+  return { alerts, loading, addAlert, removeAlert };
 }

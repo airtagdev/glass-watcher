@@ -13,9 +13,9 @@ export default function SearchPage() {
   const { data: cryptoResults } = useCryptoSearch(query);
 
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [selectedCrypto, setSelectedCrypto] = useState<string | null>(null);
+  const [selectedCryptoId, setSelectedCryptoId] = useState<string | null>(null);
   const { data: stockDetail } = useStockDetail(selectedStock || "");
-  const { data: cryptoDetail } = useCryptoDetail(selectedCrypto || "");
+  const { data: cryptoDetail } = useCryptoDetail(selectedCryptoId || "");
 
   const handleToggleStock = (symbol: string, name: string) => {
     const id = `stock-${symbol}`;
@@ -86,7 +86,7 @@ export default function SearchPage() {
             {cryptoResults.slice(0, 8).map((r) => (
               <div
                 key={r.id}
-                onClick={() => setSelectedCrypto(r.id)}
+                onClick={() => setSelectedCryptoId(r.id)}
                 className="glass-card p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
               >
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
@@ -121,7 +121,7 @@ export default function SearchPage() {
         />
       )}
 
-      {cryptoDetail && selectedCrypto && (
+      {cryptoDetail && selectedCryptoId && (
         <TickerDetail
           symbol={cryptoDetail.symbol}
           name={cryptoDetail.name}
@@ -137,7 +137,7 @@ export default function SearchPage() {
           imageUrl={cryptoDetail.image}
           isWatched={isInWatchlist(cryptoDetail.id)}
           onToggleWatch={() => handleToggleCrypto(cryptoDetail)}
-          onClose={() => setSelectedCrypto(null)}
+          onClose={() => setSelectedCryptoId(null)}
         />
       )}
     </div>

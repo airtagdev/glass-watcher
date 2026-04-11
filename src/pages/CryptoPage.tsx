@@ -59,9 +59,13 @@ export default function CryptoPage() {
               onClick={() => handleSearchClick(r)}
               className="glass-card p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
             >
-              <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
-                {r.symbol.slice(0, 2).toUpperCase()}
-              </div>
+              {r.thumb ? (
+                <img src={r.thumb} alt={r.symbol} className="w-9 h-9 rounded-full bg-secondary" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
+                  {r.symbol.slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">{r.symbol.toUpperCase()}</p>
                 <p className="text-xs text-muted-foreground truncate">{r.name}</p>

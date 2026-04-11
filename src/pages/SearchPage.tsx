@@ -115,9 +115,13 @@ export default function SearchPage() {
                     className="flex-1 flex items-center gap-3 min-w-0"
                     onClick={() => setSelectedCryptoId(r.id)}
                   >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                      {r.symbol.slice(0, 2).toUpperCase()}
-                    </div>
+                    {r.thumb ? (
+                      <img src={r.thumb} alt={r.symbol} className="w-8 h-8 rounded-full bg-secondary" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
+                        {r.symbol.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">{r.symbol.toUpperCase()}</p>
                       <p className="text-xs text-muted-foreground truncate">{r.name}</p>

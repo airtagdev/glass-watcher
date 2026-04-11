@@ -111,13 +111,16 @@ function AlertList({
       ) : (
         <div className="flex flex-col gap-2">
           {alerts.map((a) => (
-            <div key={a.id} className="glass p-3.5 rounded-xl flex items-center justify-between gap-3">
+            <div key={a.id} className={`glass p-3.5 rounded-xl flex items-center justify-between gap-3 ${a.triggered ? "opacity-60" : ""}`}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">
                   {a.tickerSymbol.toUpperCase()}{" "}
                   <span className="text-[10px] font-medium text-muted-foreground uppercase">
                     {a.tickerType}
                   </span>
+                  {a.triggered && (
+                    <span className="ml-1.5 text-[9px] font-bold text-gain uppercase">✓ Triggered</span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {a.alertType === "price"

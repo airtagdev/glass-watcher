@@ -24,12 +24,17 @@ async function fetchTopCryptos(): Promise<CryptoTicker[]> {
   return res.json();
 }
 
-async function searchCryptos(query: string): Promise<{ id: string; symbol: string; name: string }[]> {
+async function searchCryptos(query: string): Promise<{ id: string; symbol: string; name: string; thumb: string }[]> {
   if (!query || query.length < 1) return [];
   const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error("Failed to search");
   const data = await res.json();
-  return data.coins?.slice(0, 20) || [];
+  return (data.coins?.slice(0, 20) || []).map((c: any) => ({
+    id: c.id,
+    symbol: c.symbol,
+    name: c.name,
+    thumb: c.large || c.thumb || "",
+  }));
 }
 
 async function fetchCryptoById(id: string): Promise<CryptoTicker | null> {

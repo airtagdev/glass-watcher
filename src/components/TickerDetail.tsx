@@ -36,12 +36,12 @@ export function TickerDetail({
   onToggleWatch,
   onClose,
 }: TickerDetailProps) {
-  const isPositive = changePercent >= 0;
+  const isPositive = (changePercent ?? 0) >= 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-lg glass-card rounded-t-3xl p-6 pb-8 animate-fade-in"
+        className="w-full max-w-lg mx-4 glass-card rounded-3xl p-6 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -68,22 +68,22 @@ export function TickerDetail({
           <div className={`flex items-center gap-2 mt-1 ${isPositive ? "text-gain" : "text-loss"}`}>
             {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
             <span className="text-sm font-semibold">
-              {isPositive ? "+" : ""}{formatCurrency(Math.abs(change))} ({formatPercent(changePercent)})
+              {isPositive ? "+" : ""}{formatCurrency(Math.abs(change ?? 0))} ({formatPercent(changePercent)})
             </span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {high52w != null && (
+          {high52w != null && high52w > 0 && (
             <StatItem label="52W High" value={formatCurrency(high52w)} />
           )}
-          {low52w != null && (
+          {low52w != null && low52w > 0 && (
             <StatItem label="52W Low" value={formatCurrency(low52w)} />
           )}
-          {dayHigh != null && (
+          {dayHigh != null && dayHigh > 0 && (
             <StatItem label="Day High" value={formatCurrency(dayHigh)} />
           )}
-          {dayLow != null && (
+          {dayLow != null && dayLow > 0 && (
             <StatItem label="Day Low" value={formatCurrency(dayLow)} />
           )}
           {marketCap != null && marketCap > 0 && (

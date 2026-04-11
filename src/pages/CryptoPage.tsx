@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTopCryptos, useCryptoSearch, CryptoTicker } from "@/hooks/useCryptoData";
+import { useTopCryptos, useCryptoSearch, useCryptoDetail, CryptoTicker } from "@/hooks/useCryptoData";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
@@ -12,6 +12,8 @@ export default function CryptoPage() {
   const { data: topCryptos, isLoading } = useTopCryptos();
   const { data: searchResults } = useCryptoSearch(query);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoTicker | null>(null);
+  const [searchSelectedId, setSearchSelectedId] = useState<string | null>(null);
+  const { data: searchDetailData } = useCryptoDetail(searchSelectedId || "");
 
   const handleToggle = (c: CryptoTicker) => {
     if (isInWatchlist(c.id)) removeFromWatchlist(c.id);
@@ -19,29 +21,16 @@ export default function CryptoPage() {
   };
 
   const handleSearchClick = (r: { id: string; symbol: string; name: string }) => {
-    // Try to find full data from the already-loaded top list
     const found = topCryptos?.find((c) => c.id === r.id);
     if (found) {
       setSelectedCrypto(found);
     } else {
-      // Create a minimal object for display (search results don't have price data)
-      setSelectedCrypto({
-        id: r.id,
-        symbol: r.symbol,
-        name: r.name,
-        current_price: 0,
-        price_change_percentage_24h: 0,
-        price_change_24h: 0,
-        market_cap: 0,
-        total_volume: 0,
-        high_24h: 0,
-        low_24h: 0,
-        ath: 0,
-        atl: 0,
-        image: "",
-      });
+      setSearchSelectedId(r.id);
     }
   };
+
+  // Use fetched detail data for search-selected crypto
+  const detailCrypto = selectedCrypto || (searchDetailData && searchSelectedId ? searchDetailData : null);
 
   const showSearch = query.length >= 1 && searchResults;
 
@@ -103,23 +92,23 @@ export default function CryptoPage() {
         </div>
       )}
 
-      {selectedCrypto && (
+      {detailCrypto && (
         <TickerDetail
-          symbol={selectedCrypto.symbol}
-          name={selectedCrypto.name}
-          price={selectedCrypto.current_price}
-          change={selectedCrypto.price_change_24h}
-          changePercent={selectedCrypto.price_change_percentage_24h}
-          high52w={selectedCrypto.ath}
-          low52w={selectedCrypto.atl}
-          marketCap={selectedCrypto.market_cap}
-          volume={selectedCrypto.total_volume}
-          dayHigh={selectedCrypto.high_24h}
-          dayLow={selectedCrypto.low_24h}
-          imageUrl={selectedCrypto.image}
-          isWatched={isInWatchlist(selectedCrypto.id)}
-          onToggleWatch={() => handleToggle(selectedCrypto)}
-          onClose={() => setSelectedCrypto(null)}
+          symbol={detailCrypto.symbol}
+          name={detailCrypto.name}
+          price={detailCrypto.current_price}
+          change={detailCrypto.price_change_24h}
+          changePercent={detailCrypto.price_change_percentage_24h}
+          high52w={detailCrypto.ath}
+          low52w={detailCrypto.atl}
+          marketCap={detailCrypto.market_cap}
+          volume={detailCrypto.total_volume}
+          dayHigh={detailCrypto.high_24h}
+          dayLow={detailCrypto.low_24h}
+          imageUrl={detailCrypto.image}
+          isWatched={isInWatchlist(detailCrypto.id)}
+          onToggleWatch={() => handleToggle(detailCrypto)}
+          onClose={() => { setSelectedCrypto(null); setSearchSelectedId(null); }}
         />
       )}
     </div>

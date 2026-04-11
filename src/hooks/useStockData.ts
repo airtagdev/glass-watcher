@@ -14,13 +14,25 @@ export interface StockQuote {
   regularMarketDayLow: number;
 }
 
-const CORS_PROXY = "https://api.allorigins.win/raw?url=";
+const PROXIES = [
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+];
+
+async function fetchWithProxy(url: string): Promise<Response> {
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url));
+      if (res.ok) return res;
+    } catch { /* try next */ }
+  }
+  throw new Error("All proxies failed");
+}
 
 async function fetchSingleStockChart(symbol: string): Promise<StockQuote | null> {
   try {
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
-    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
-    if (!res.ok) return null;
+    const res = await fetchWithProxy(yahooUrl);
     const data = await res.json();
     const result = data.chart?.result?.[0];
     if (!result) return null;
@@ -36,7 +48,7 @@ async function fetchSingleStockChart(symbol: string): Promise<StockQuote | null>
       regularMarketChange: change,
       regularMarketChangePercent: changePercent,
       regularMarketVolume: meta.regularMarketVolume || 0,
-      marketCap: 0, // chart endpoint doesn't provide market cap
+      marketCap: 0,
       fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
       fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
       regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
@@ -49,22 +61,14 @@ async function fetchSingleStockChart(symbol: string): Promise<StockQuote | null>
 
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (symbols.length === 0) return [];
-  // Fetch in parallel batches of 5 to avoid overwhelming the proxy
-  const results: StockQuote[] = [];
-  const batchSize = 5;
-  for (let i = 0; i < symbols.length; i += batchSize) {
-    const batch = symbols.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map(fetchSingleStockChart));
-    results.push(...batchResults.filter((r): r is StockQuote => r !== null));
-  }
-  return results;
+  const results = await Promise.all(symbols.map(fetchSingleStockChart));
+  return results.filter((r): r is StockQuote => r !== null);
 }
 
 async function searchStocks(query: string): Promise<{ symbol: string; shortname: string; exchDisp: string }[]> {
   if (!query || query.length < 1) return [];
   const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
-  const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
-  if (!res.ok) throw new Error("Failed to search stocks");
+  const res = await fetchWithProxy(yahooUrl);
   const data = await res.json();
   return (data.quotes || [])
     .filter((q: any) => q.quoteType === "EQUITY")
@@ -83,7 +87,7 @@ export function usePopularStocks() {
     queryFn: () => fetchStockQuotes(POPULAR_STOCKS),
     refetchInterval: 60000,
     staleTime: 30000,
-    retry: 2,
+    retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 }

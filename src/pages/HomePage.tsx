@@ -11,6 +11,7 @@ import { ManageAlerts } from "@/components/ManageAlerts";
 
 export default function HomePage() {
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist } = useWatchlist();
+  const [showAlerts, setShowAlerts] = useStateAlerts(false);
   const cryptoIds = watchlist.filter((w) => w.type === "crypto").map((w) => w.id);
   const stockSymbols = watchlist.filter((w) => w.type === "stock").map((w) => w.symbol);
 

@@ -1,5 +1,7 @@
-import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles, Send, Loader2 } from "lucide-react";
 import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "@/lib/format";
+import { Input } from "@/components/ui/input";
 
 interface TickerDetailProps {
   symbol: string;
@@ -19,6 +21,8 @@ interface TickerDetailProps {
   onClose: () => void;
 }
 
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ticker-ai`;
+
 export function TickerDetail({
   symbol,
   name,
@@ -37,11 +41,75 @@ export function TickerDetail({
   onClose,
 }: TickerDetailProps) {
   const isPositive = (changePercent ?? 0) >= 0;
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const askAI = async () => {
+    if (!aiQuery.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiResponse("");
+    abortRef.current = new AbortController();
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ message: aiQuery, symbol, name }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!resp.ok || !resp.body) {
+        const err = await resp.json().catch(() => ({ error: "Request failed" }));
+        setAiResponse(err.error || "Something went wrong");
+        setAiLoading(false);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let idx;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              full += content;
+              setAiResponse(full);
+            }
+          } catch { /* partial */ }
+        }
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        setAiResponse("Failed to get AI response");
+      }
+    }
+    setAiLoading(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-lg mx-4 glass-card rounded-3xl p-6 animate-fade-in"
+        className="w-full max-w-lg mx-4 glass-card rounded-3xl p-6 animate-fade-in max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -94,10 +162,32 @@ export function TickerDetail({
           )}
         </div>
 
-        {/* Ask AI prompt bar */}
-        <div className="glass rounded-xl px-4 py-3 mb-4 flex items-center gap-2 opacity-60 cursor-not-yet">
-          <Sparkles className="w-4 h-4 text-primary shrink-0" />
-          <span className="text-xs text-muted-foreground">Ask AI about this ticker...</span>
+        {/* Ask AI */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+              <Input
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && askAI()}
+                placeholder="Ask AI about this ticker..."
+                className="pl-9 pr-3 glass border-glass-border/50 rounded-xl text-sm"
+              />
+            </div>
+            <button
+              onClick={askAI}
+              disabled={aiLoading || !aiQuery.trim()}
+              className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-40"
+            >
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
+          {aiResponse && (
+            <div className="glass rounded-xl p-3 mt-2 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              {aiResponse}
+            </div>
+          )}
         </div>
 
         <button

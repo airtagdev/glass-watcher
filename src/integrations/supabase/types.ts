@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      price_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          device_id: string
+          direction: string | null
+          id: string
+          ticker_name: string
+          ticker_symbol: string
+          ticker_type: string
+          triggered: boolean
+          value: number
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          device_id: string
+          direction?: string | null
+          id?: string
+          ticker_name: string
+          ticker_symbol: string
+          ticker_type: string
+          triggered?: boolean
+          value: number
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          device_id?: string
+          direction?: string | null
+          id?: string
+          ticker_name?: string
+          ticker_symbol?: string
+          ticker_type?: string
+          triggered?: boolean
+          value?: number
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          device_id: string
+          endpoint: string
+          id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device_id: string
+          endpoint: string
+          id?: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device_id?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

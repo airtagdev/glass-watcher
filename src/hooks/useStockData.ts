@@ -14,15 +14,13 @@ export interface StockQuote {
   regularMarketDayLow: number;
 }
 
-const YAHOO_PROXY = "https://query1.finance.yahoo.com/v7/finance/quote";
-const CORS_PROXY = "https://corsproxy.io/?";
+// Use allorigins as a more reliable CORS proxy
+const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (symbols.length === 0) return [];
-  const url = `${CORS_PROXY}${encodeURIComponent(
-    `${YAHOO_PROXY}?symbols=${symbols.join(",")}&fields=shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume,marketCap,fiftyTwoWeekHigh,fiftyTwoWeekLow,regularMarketDayHigh,regularMarketDayLow`
-  )}`;
-  const res = await fetch(url);
+  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(",")}&fields=shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume,marketCap,fiftyTwoWeekHigh,fiftyTwoWeekLow,regularMarketDayHigh,regularMarketDayLow`;
+  const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
   if (!res.ok) throw new Error("Failed to fetch stock data");
   const data = await res.json();
   return (data.quoteResponse?.result || []).map((q: any) => ({
@@ -42,10 +40,8 @@ async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
 
 async function searchStocks(query: string): Promise<{ symbol: string; shortname: string; exchDisp: string }[]> {
   if (!query || query.length < 1) return [];
-  const url = `${CORS_PROXY}${encodeURIComponent(
-    `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`
-  )}`;
-  const res = await fetch(url);
+  const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
+  const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
   if (!res.ok) throw new Error("Failed to search stocks");
   const data = await res.json();
   return (data.quotes || [])
@@ -65,6 +61,8 @@ export function usePopularStocks() {
     queryFn: () => fetchStockQuotes(POPULAR_STOCKS),
     refetchInterval: 60000,
     staleTime: 30000,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 }
 

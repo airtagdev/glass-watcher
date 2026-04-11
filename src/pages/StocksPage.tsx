@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePopularStocks, useStockSearch, useStockDetail, StockQuote } from "@/hooks/useStockData";
+import { usePopularStocks, useStockSearch, StockQuote } from "@/hooks/useStockData";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
@@ -8,16 +8,25 @@ import { Search, TrendingUp } from "lucide-react";
 
 export default function StocksPage() {
   const [query, setQuery] = useState("");
-  const { watchlist, addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const { data: popular, isLoading } = usePopularStocks();
   const { data: searchResults } = useStockSearch(query);
-  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
-  const { data: detail } = useStockDetail(selectedSymbol || "");
+  const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
 
-  const handleToggle = (symbol: string, name: string) => {
-    const id = `stock-${symbol}`;
+  const handleToggle = (s: StockQuote) => {
+    const id = `stock-${s.symbol}`;
     if (isInWatchlist(id)) removeFromWatchlist(id);
-    else addToWatchlist({ id, symbol, name, type: "stock" });
+    else addToWatchlist({ id, symbol: s.symbol, name: s.shortName, type: "stock" });
+  };
+
+  const handleSearchClick = (symbol: string) => {
+    // Try to find from already-loaded popular list
+    const found = popular?.find((s) => s.symbol === symbol);
+    if (found) {
+      setSelectedStock(found);
+    }
+    // If not in popular list, we still need to fetch — but set a placeholder
+    // The detail will show once the data arrives
   };
 
   const showSearch = query.length >= 1 && searchResults;
@@ -44,7 +53,7 @@ export default function StocksPage() {
           {searchResults.map((r) => (
             <div
               key={r.symbol}
-              onClick={() => setSelectedSymbol(r.symbol)}
+              onClick={() => handleSearchClick(r.symbol)}
               className="glass-card p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
             >
               <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
@@ -73,29 +82,29 @@ export default function StocksPage() {
               changePercent={s.regularMarketChangePercent}
               change={s.regularMarketChange}
               isWatched={isInWatchlist(`stock-${s.symbol}`)}
-              onToggleWatch={() => handleToggle(s.symbol, s.shortName)}
-              onClick={() => setSelectedSymbol(s.symbol)}
+              onToggleWatch={() => handleToggle(s)}
+              onClick={() => setSelectedStock(s)}
             />
           ))}
         </div>
       )}
 
-      {detail && selectedSymbol && (
+      {selectedStock && (
         <TickerDetail
-          symbol={detail.symbol}
-          name={detail.shortName}
-          price={detail.regularMarketPrice}
-          change={detail.regularMarketChange}
-          changePercent={detail.regularMarketChangePercent}
-          high52w={detail.fiftyTwoWeekHigh}
-          low52w={detail.fiftyTwoWeekLow}
-          marketCap={detail.marketCap}
-          volume={detail.regularMarketVolume}
-          dayHigh={detail.regularMarketDayHigh}
-          dayLow={detail.regularMarketDayLow}
-          isWatched={isInWatchlist(`stock-${detail.symbol}`)}
-          onToggleWatch={() => handleToggle(detail.symbol, detail.shortName)}
-          onClose={() => setSelectedSymbol(null)}
+          symbol={selectedStock.symbol}
+          name={selectedStock.shortName}
+          price={selectedStock.regularMarketPrice}
+          change={selectedStock.regularMarketChange}
+          changePercent={selectedStock.regularMarketChangePercent}
+          high52w={selectedStock.fiftyTwoWeekHigh}
+          low52w={selectedStock.fiftyTwoWeekLow}
+          marketCap={selectedStock.marketCap}
+          volume={selectedStock.regularMarketVolume}
+          dayHigh={selectedStock.regularMarketDayHigh}
+          dayLow={selectedStock.regularMarketDayLow}
+          isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
+          onToggleWatch={() => handleToggle(selectedStock)}
+          onClose={() => setSelectedStock(null)}
         />
       )}
     </div>

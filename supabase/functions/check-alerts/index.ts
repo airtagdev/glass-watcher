@@ -1,5 +1,10 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const YAHOO_API = "https://query1.finance.yahoo.com/v7/finance/quote";

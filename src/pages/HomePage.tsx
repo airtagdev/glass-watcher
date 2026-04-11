@@ -5,7 +5,9 @@ import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { CryptoTicker } from "@/hooks/useCryptoData";
-import { Eye, Sparkles } from "lucide-react";
+import { Eye, Sparkles, Bell } from "lucide-react";
+import { useState as useStateAlerts } from "react";
+import { ManageAlerts } from "@/components/ManageAlerts";
 
 export default function HomePage() {
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist } = useWatchlist();

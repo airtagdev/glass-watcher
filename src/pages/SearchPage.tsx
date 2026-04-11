@@ -4,7 +4,7 @@ import { useCryptoSearch, useCryptoDetail, CryptoTicker } from "@/hooks/useCrypt
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerDetail } from "@/components/TickerDetail";
 import { Input } from "@/components/ui/input";
-import { Search as SearchIcon, TrendingUp, Bitcoin } from "lucide-react";
+import { Search as SearchIcon, TrendingUp, Bitcoin, Star } from "lucide-react";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -23,9 +23,9 @@ export default function SearchPage() {
     else addToWatchlist({ id, symbol, name, type: "stock" });
   };
 
-  const handleToggleCrypto = (c: CryptoTicker) => {
-    if (isInWatchlist(c.id)) removeFromWatchlist(c.id);
-    else addToWatchlist({ id: c.id, symbol: c.symbol, name: c.name, type: "crypto" });
+  const handleToggleCrypto = (id: string, symbol: string, name: string) => {
+    if (isInWatchlist(id)) removeFromWatchlist(id);
+    else addToWatchlist({ id, symbol, name, type: "crypto" });
   };
 
   return (
@@ -57,21 +57,40 @@ export default function SearchPage() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Stocks</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {stockResults.slice(0, 8).map((r) => (
-              <div
-                key={r.symbol}
-                onClick={() => setSelectedStock(r.symbol)}
-                className="glass-card p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-              >
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                  {r.symbol.slice(0, 2)}
+            {stockResults.slice(0, 8).map((r) => {
+              const watchId = `stock-${r.symbol}`;
+              const watched = isInWatchlist(watchId);
+              return (
+                <div
+                  key={r.symbol}
+                  className="glass-card p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+                >
+                  <div
+                    className="flex-1 flex items-center gap-3 min-w-0"
+                    onClick={() => setSelectedStock(r.symbol)}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
+                      {r.symbol.slice(0, 2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{r.symbol}</p>
+                      <p className="text-xs text-muted-foreground truncate">{r.shortname}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleStock(r.symbol, r.shortname);
+                    }}
+                    className="p-1.5"
+                  >
+                    <Star
+                      className={`w-4 h-4 transition-colors ${watched ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                    />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{r.symbol}</p>
-                  <p className="text-xs text-muted-foreground truncate">{r.shortname}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -83,21 +102,39 @@ export default function SearchPage() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Crypto</h2>
           </div>
           <div className="flex flex-col gap-2">
-            {cryptoResults.slice(0, 8).map((r) => (
-              <div
-                key={r.id}
-                onClick={() => setSelectedCryptoId(r.id)}
-                className="glass-card p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-              >
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
-                  {r.symbol.slice(0, 2).toUpperCase()}
+            {cryptoResults.slice(0, 8).map((r) => {
+              const watched = isInWatchlist(r.id);
+              return (
+                <div
+                  key={r.id}
+                  className="glass-card p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+                >
+                  <div
+                    className="flex-1 flex items-center gap-3 min-w-0"
+                    onClick={() => setSelectedCryptoId(r.id)}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
+                      {r.symbol.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{r.symbol.toUpperCase()}</p>
+                      <p className="text-xs text-muted-foreground truncate">{r.name}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleCrypto(r.id, r.symbol, r.name);
+                    }}
+                    className="p-1.5"
+                  >
+                    <Star
+                      className={`w-4 h-4 transition-colors ${watched ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                    />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{r.symbol.toUpperCase()}</p>
-                  <p className="text-xs text-muted-foreground truncate">{r.name}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -136,7 +173,7 @@ export default function SearchPage() {
           dayLow={cryptoDetail.low_24h}
           imageUrl={cryptoDetail.image}
           isWatched={isInWatchlist(cryptoDetail.id)}
-          onToggleWatch={() => handleToggleCrypto(cryptoDetail)}
+          onToggleWatch={() => handleToggleCrypto(cryptoDetail.id, cryptoDetail.symbol, cryptoDetail.name)}
           onClose={() => setSelectedCryptoId(null)}
         />
       )}

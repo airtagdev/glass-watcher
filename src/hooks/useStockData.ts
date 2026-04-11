@@ -14,28 +14,50 @@ export interface StockQuote {
   regularMarketDayLow: number;
 }
 
-// Use allorigins as a more reliable CORS proxy
 const CORS_PROXY = "https://api.allorigins.win/raw?url=";
+
+async function fetchSingleStockChart(symbol: string): Promise<StockQuote | null> {
+  try {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data.chart?.result?.[0];
+    if (!result) return null;
+    const meta = result.meta;
+    const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+    const price = meta.regularMarketPrice || 0;
+    const change = price - prevClose;
+    const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+    return {
+      symbol: meta.symbol || symbol,
+      shortName: meta.shortName || meta.longName || symbol,
+      regularMarketPrice: price,
+      regularMarketChange: change,
+      regularMarketChangePercent: changePercent,
+      regularMarketVolume: meta.regularMarketVolume || 0,
+      marketCap: 0, // chart endpoint doesn't provide market cap
+      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
+      fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
+      regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
+      regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (symbols.length === 0) return [];
-  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(",")}&fields=shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume,marketCap,fiftyTwoWeekHigh,fiftyTwoWeekLow,regularMarketDayHigh,regularMarketDayLow`;
-  const res = await fetch(`${CORS_PROXY}${encodeURIComponent(yahooUrl)}`);
-  if (!res.ok) throw new Error("Failed to fetch stock data");
-  const data = await res.json();
-  return (data.quoteResponse?.result || []).map((q: any) => ({
-    symbol: q.symbol,
-    shortName: q.shortName || q.longName || q.symbol,
-    regularMarketPrice: q.regularMarketPrice || 0,
-    regularMarketChange: q.regularMarketChange || 0,
-    regularMarketChangePercent: q.regularMarketChangePercent || 0,
-    regularMarketVolume: q.regularMarketVolume || 0,
-    marketCap: q.marketCap || 0,
-    fiftyTwoWeekHigh: q.fiftyTwoWeekHigh || 0,
-    fiftyTwoWeekLow: q.fiftyTwoWeekLow || 0,
-    regularMarketDayHigh: q.regularMarketDayHigh || 0,
-    regularMarketDayLow: q.regularMarketDayLow || 0,
-  }));
+  // Fetch in parallel batches of 5 to avoid overwhelming the proxy
+  const results: StockQuote[] = [];
+  const batchSize = 5;
+  for (let i = 0; i < symbols.length; i += batchSize) {
+    const batch = symbols.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fetchSingleStockChart));
+    results.push(...batchResults.filter((r): r is StockQuote => r !== null));
+  }
+  return results;
 }
 
 async function searchStocks(query: string): Promise<{ symbol: string; shortname: string; exchDisp: string }[]> {
@@ -53,7 +75,7 @@ async function searchStocks(query: string): Promise<{ symbol: string; shortname:
     }));
 }
 
-const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V", "WMT", "DIS", "BA", "PYPL", "INTC", "AMD", "CRM", "UBER", "SQ", "COIN"];
+const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V"];
 
 export function usePopularStocks() {
   return useQuery({
@@ -61,7 +83,7 @@ export function usePopularStocks() {
     queryFn: () => fetchStockQuotes(POPULAR_STOCKS),
     refetchInterval: 60000,
     staleTime: 30000,
-    retry: 3,
+    retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 }
@@ -88,7 +110,7 @@ export function useStockSearch(query: string) {
 export function useStockDetail(symbol: string) {
   return useQuery({
     queryKey: ["stockDetail", symbol],
-    queryFn: () => fetchStockQuotes([symbol]).then((r) => r[0] || null),
+    queryFn: () => fetchSingleStockChart(symbol),
     enabled: !!symbol,
     refetchInterval: 30000,
   });

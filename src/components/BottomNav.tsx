@@ -1,4 +1,4 @@
-import { Home, TrendingUp, Bitcoin, Search } from "lucide-react";
+import { Home, TrendingUp, Bitcoin, Search, Newspaper, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
@@ -6,6 +6,8 @@ const tabs = [
   { path: "/stocks", icon: TrendingUp, label: "Stocks" },
   { path: "/crypto", icon: Bitcoin, label: "Crypto" },
   { path: "/search", icon: Search, label: "Search" },
+  { path: "/news", icon: Newspaper, label: "News" },
+  { path: "/ai", icon: Sparkles, label: "AI" },
 ];
 
 export function BottomNav() {
@@ -21,14 +23,14 @@ export function BottomNav() {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 ${
                 active
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <tab.icon className={`w-5 h-5 ${active ? "stroke-[2.5]" : ""}`} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <span className="text-[9px] font-medium">{tab.label}</span>
             </button>
           );
         })}

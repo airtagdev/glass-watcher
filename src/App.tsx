@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import StocksPage from "./pages/StocksPage";
 import CryptoPage from "./pages/CryptoPage";
 import SearchPage from "./pages/SearchPage";
+import NewsPage from "./pages/NewsPage";
+import AIPage from "./pages/AIPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/stocks" element={<StocksPage />} />
             <Route path="/crypto" element={<CryptoPage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/ai" element={<AIPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNav />

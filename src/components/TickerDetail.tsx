@@ -1,4 +1,4 @@
-import { X, Plus, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
 import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "@/lib/format";
 
 interface TickerDetailProps {
@@ -92,6 +92,12 @@ export function TickerDetail({
           {volume != null && volume > 0 && (
             <StatItem label="Volume" value={formatVolume(volume)} />
           )}
+        </div>
+
+        {/* Ask AI prompt bar */}
+        <div className="glass rounded-xl px-4 py-3 mb-4 flex items-center gap-2 opacity-60 cursor-not-yet">
+          <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-xs text-muted-foreground">Ask AI about this ticker...</span>
         </div>
 
         <button

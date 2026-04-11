@@ -21,18 +21,20 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="min-h-screen bg-background">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/stocks" element={<StocksPage />} />
-            <Route path="/crypto" element={<CryptoPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/trending" element={<TrendingPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <BottomNav />
-        </div>
+        <AppLoader>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/stocks" element={<StocksPage />} />
+              <Route path="/crypto" element={<CryptoPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/trending" element={<TrendingPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <BottomNav />
+          </div>
+        </AppLoader>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

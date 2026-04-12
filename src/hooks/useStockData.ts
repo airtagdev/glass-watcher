@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface StockQuote {
   symbol: string;
@@ -14,72 +15,63 @@ export interface StockQuote {
   regularMarketDayLow: number;
 }
 
-const PROXIES = [
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-];
-
-async function fetchWithProxy(url: string): Promise<Response> {
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetch(proxy(url));
-      if (res.ok) return res;
-    } catch { /* try next */ }
-  }
-  throw new Error("All proxies failed");
-}
-
-async function fetchSingleStockChart(symbol: string): Promise<StockQuote | null> {
-  try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
-    const res = await fetchWithProxy(yahooUrl);
-    const data = await res.json();
-    const result = data.chart?.result?.[0];
-    if (!result) return null;
-    const meta = result.meta;
-    const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
-    const price = meta.regularMarketPrice || 0;
-    const change = price - prevClose;
-    const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-    return {
-      symbol: meta.symbol || symbol,
-      shortName: meta.shortName || meta.longName || symbol,
-      regularMarketPrice: price,
-      regularMarketChange: change,
-      regularMarketChangePercent: changePercent,
-      regularMarketVolume: meta.regularMarketVolume || 0,
-      marketCap: 0,
-      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
-      fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
-      regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
-      regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
   if (symbols.length === 0) return [];
-  const results = await Promise.all(symbols.map(fetchSingleStockChart));
-  return results.filter((r): r is StockQuote => r !== null);
+
+  // Batch into chunks of 10 to avoid overly long requests
+  const chunks: string[][] = [];
+  for (let i = 0; i < symbols.length; i += 10) {
+    chunks.push(symbols.slice(i, i + 10));
+  }
+
+  const allResults: StockQuote[] = [];
+  for (const chunk of chunks) {
+    try {
+      const { data, error } = await supabase.functions.invoke("stock-proxy", {
+        body: null,
+        headers: { "Content-Type": "application/json" },
+      });
+      // Use GET via fetch directly for query params
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stock-proxy?action=quotes&symbols=${chunk.join(",")}`;
+      const res = await fetch(url, {
+        headers: {
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      if (res.ok) {
+        const quotes = await res.json();
+        allResults.push(...quotes);
+      }
+    } catch {
+      // Skip failed chunks
+    }
+  }
+  return allResults;
 }
 
 async function searchStocks(query: string): Promise<{ symbol: string; shortname: string; exchDisp: string }[]> {
   if (!query || query.length < 1) return [];
-  const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
-  const res = await fetchWithProxy(yahooUrl);
-  const data = await res.json();
-  return (data.quotes || [])
-    .filter((q: any) => q.quoteType === "EQUITY")
-    .map((q: any) => ({
-      symbol: q.symbol,
-      shortname: q.shortname || q.longname || q.symbol,
-      exchDisp: q.exchDisp || "",
-    }));
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stock-proxy?action=search&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, {
+      headers: {
+        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
-const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V"];
+const POPULAR_STOCKS = [
+  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V",
+  "WMT", "JNJ", "PG", "MA", "UNH", "HD", "DIS", "PYPL", "BAC", "INTC",
+  "CSCO", "VZ", "ADBE", "CRM", "CMCSA", "PFE", "KO", "PEP", "TMO", "ABBV",
+  "AVGO", "COST", "MRK", "CVX", "XOM", "LLY", "ABT", "MCD", "ACN", "DHR",
+  "NKE", "TXN", "QCOM", "NEE", "LIN", "LOW", "MDT", "UPS", "MS", "GS",
+];
 
 export function usePopularStocks() {
   return useQuery({
@@ -114,7 +106,10 @@ export function useStockSearch(query: string) {
 export function useStockDetail(symbol: string) {
   return useQuery({
     queryKey: ["stockDetail", symbol],
-    queryFn: () => fetchSingleStockChart(symbol),
+    queryFn: async () => {
+      const results = await fetchStockQuotes([symbol]);
+      return results[0] || null;
+    },
     enabled: !!symbol,
     refetchInterval: 30000,
   });

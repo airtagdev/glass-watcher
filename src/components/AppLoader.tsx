@@ -26,11 +26,6 @@ async function prefetchStocks() {
     return [];
   }
 }
-      }
-    })
-  );
-  return results.filter(Boolean);
-}
 
 async function prefetchCryptos() {
   const res = await fetch(

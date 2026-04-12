@@ -26,8 +26,11 @@ serve(async (req) => {
         symbolList.map(async (symbol) => {
           try {
             const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
-            const res = await fetch(yahooUrl);
-            if (!res.ok) return null;
+            const res = await fetch(yahooUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              },
+            });
             const data = await res.json();
             const result = data.chart?.result?.[0];
             if (!result) return null;
@@ -66,8 +69,11 @@ serve(async (req) => {
         return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
-      const res = await fetch(yahooUrl);
-      const data = await res.json();
+      const res = await fetch(yahooUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
       const quotes = (data.quotes || [])
         .filter((item: any) => item.quoteType === "EQUITY")
         .map((item: any) => ({

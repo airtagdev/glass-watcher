@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
-import tradexLogo from "@/assets/tradex-logo.png";
+
 
 const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V"];
 
@@ -75,42 +75,54 @@ export function AppLoader({ children }: AppLoaderProps) {
 
   useEffect(() => {
     let cancelled = false;
+    let smoothInterval: ReturnType<typeof setInterval>;
+
+    function smoothProgress(from: number, to: number, duration: number) {
+      const steps = Math.ceil(duration / 50);
+      const increment = (to - from) / steps;
+      let current = from;
+      let step = 0;
+      clearInterval(smoothInterval);
+      smoothInterval = setInterval(() => {
+        step++;
+        current = Math.min(from + increment * step, to);
+        if (!cancelled) setProgress(Math.round(current));
+        if (step >= steps) clearInterval(smoothInterval);
+      }, 50);
+    }
 
     async function load() {
       try {
-        setProgress(10);
+        setProgress(5);
+        smoothProgress(5, 40, 2000);
         setStatus("Fetching stock prices...");
 
         const stocksPromise = prefetchStocks();
         const cryptosPromise = prefetchCryptos();
 
-        // Update progress as each resolves
         const stocks = await stocksPromise;
         if (cancelled) return;
-        setProgress(50);
+        smoothProgress(40, 65, 1000);
         setStatus("Fetching crypto prices...");
-
         queryClient.setQueryData(["popularStocks"], stocks);
 
         const cryptos = await cryptosPromise;
         if (cancelled) return;
-        setProgress(90);
+        smoothProgress(65, 95, 800);
         setStatus("Almost ready...");
-
         queryClient.setQueryData(["topCryptos"], cryptos);
 
-        setProgress(100);
-        // Brief pause so the user sees 100%
+        await new Promise((r) => setTimeout(r, 600));
+        if (!cancelled) setProgress(100);
         await new Promise((r) => setTimeout(r, 300));
         if (!cancelled) setReady(true);
       } catch {
-        // If prefetch fails, let the app load anyway
         if (!cancelled) setReady(true);
       }
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearInterval(smoothInterval); };
   }, [queryClient]);
 
   if (ready) return <>{children}</>;
@@ -118,12 +130,11 @@ export function AppLoader({ children }: AppLoaderProps) {
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 px-8">
       <div className="flex flex-col items-center gap-4 mb-8">
-        <img src={tradexLogo} alt="Tradex" className="w-24 h-24 rounded-2xl" />
         <p className="text-xs text-muted-foreground tracking-widest uppercase">Trade Smarter. Invest Better.</p>
       </div>
 
       <div className="w-full max-w-xs space-y-3">
-        <Progress value={progress} className="h-1.5 bg-secondary" />
+        <Progress value={progress} className="h-1.5 bg-secondary glow-progress" />
         <p className="text-xs text-muted-foreground text-center">{status}</p>
       </div>
     </div>

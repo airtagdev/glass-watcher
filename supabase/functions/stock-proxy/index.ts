@@ -78,6 +78,7 @@ serve(async (req) => {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         },
       });
+      const data = await res.json();
       const quotes = (data.quotes || [])
         .filter((item: any) => item.quoteType === "EQUITY")
         .map((item: any) => ({

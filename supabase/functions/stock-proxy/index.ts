@@ -31,6 +31,10 @@ serve(async (req) => {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
               },
             });
+            if (!res.ok) {
+              console.error(`Yahoo API error for ${symbol}: ${res.status} ${await res.text()}`);
+              return null;
+            }
             const data = await res.json();
             const result = data.chart?.result?.[0];
             if (!result) return null;

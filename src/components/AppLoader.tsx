@@ -129,7 +129,8 @@ export function AppLoader({ children }: AppLoaderProps) {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 px-8">
-      <div className="flex flex-col items-center gap-4 mb-8">
+      <div className="flex flex-col items-center gap-2 mb-8">
+        <h1 className="text-4xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)] tracking-tight">Tradex</h1>
         <p className="text-xs text-muted-foreground tracking-widest uppercase">Trade Smarter. Invest Better.</p>
       </div>
 

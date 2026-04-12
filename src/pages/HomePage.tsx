@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useWatchlist, WatchlistItem } from "@/hooks/useWatchlist";
 import { useCryptosByIds } from "@/hooks/useCryptoData";
 import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
@@ -6,12 +6,17 @@ import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { CryptoTicker } from "@/hooks/useCryptoData";
 import { Eye, Sparkles, Bell } from "lucide-react";
-import { useState as useStateAlerts } from "react";
 import { ManageAlerts } from "@/components/ManageAlerts";
+
+type WatchlistEntry = {
+  watchlistItem: WatchlistItem;
+  stock?: StockQuote;
+  crypto?: CryptoTicker;
+};
 
 export default function HomePage() {
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist, togglePin, isPinned, pinnedIds, pinCount, maxPins } = useWatchlist();
-  const [showAlerts, setShowAlerts] = useStateAlerts(false);
+  const [showAlerts, setShowAlerts] = useState(false);
   const cryptoIds = watchlist.filter((w) => w.type === "crypto").map((w) => w.id);
   const stockSymbols = watchlist.filter((w) => w.type === "stock").map((w) => w.symbol);
 
@@ -33,16 +38,24 @@ export default function HomePage() {
     else addToWatchlist({ id, symbol: s.symbol, name: s.shortName, type: "stock" });
   };
 
-  // Sort: pinned first (in pin order), then unpinned
-  const sortByPinned = <T,>(items: T[], getId: (item: T) => string): T[] => {
-    const pinned = items.filter((i) => isPinned(getId(i)));
-    const unpinned = items.filter((i) => !isPinned(getId(i)));
-    pinned.sort((a, b) => pinnedIds.indexOf(getId(a)) - pinnedIds.indexOf(getId(b)));
-    return [...pinned, ...unpinned];
-  };
+  // Build a combined, sorted list: pinned first (in pin order), then unpinned (in watchlist order)
+  const entries = useMemo<WatchlistEntry[]>(() => {
+    const result: WatchlistEntry[] = watchlist.map((item) => {
+      if (item.type === "stock") {
+        const stock = stockData?.find((s) => `stock-${s.symbol}` === item.id);
+        return { watchlistItem: item, stock };
+      } else {
+        const crypto = cryptoData?.find((c) => c.id === item.id);
+        return { watchlistItem: item, crypto };
+      }
+    });
 
-  const sortedStocks = stockData ? sortByPinned(stockData, (s) => `stock-${s.symbol}`) : [];
-  const sortedCryptos = cryptoData ? sortByPinned(cryptoData, (c) => c.id) : [];
+    // Sort: pinned items first in pin order, then unpinned in original order
+    const pinned = result.filter((e) => isPinned(e.watchlistItem.id));
+    const unpinned = result.filter((e) => !isPinned(e.watchlistItem.id));
+    pinned.sort((a, b) => pinnedIds.indexOf(a.watchlistItem.id) - pinnedIds.indexOf(b.watchlistItem.id));
+    return [...pinned, ...unpinned];
+  }, [watchlist, stockData, cryptoData, isPinned, pinnedIds]);
 
   const canPin = pinCount < maxPins;
 
@@ -70,42 +83,60 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {sortedStocks.map((s) => {
-            const id = `stock-${s.symbol}`;
+          {entries.map((entry) => {
+            const { watchlistItem, stock, crypto } = entry;
+            const id = watchlistItem.id;
+
+            if (watchlistItem.type === "stock" && stock) {
+              return (
+                <TickerCard
+                  key={id}
+                  symbol={stock.symbol}
+                  name={stock.shortName}
+                  price={stock.regularMarketPrice}
+                  changePercent={stock.regularMarketChangePercent}
+                  change={stock.regularMarketChange}
+                  isWatched={true}
+                  onToggleWatch={() => handleToggleStock(stock)}
+                  onClick={() => setSelectedStock(stock)}
+                  isPinned={isPinned(id)}
+                  onTogglePin={() => togglePin(id)}
+                  canPin={canPin}
+                />
+              );
+            }
+
+            if (watchlistItem.type === "crypto" && crypto) {
+              return (
+                <TickerCard
+                  key={id}
+                  symbol={crypto.symbol}
+                  name={crypto.name}
+                  price={crypto.current_price}
+                  changePercent={crypto.price_change_percentage_24h}
+                  change={crypto.price_change_24h}
+                  imageUrl={crypto.image}
+                  isWatched={true}
+                  onToggleWatch={() => handleToggleCrypto(crypto)}
+                  onClick={() => setSelectedCrypto(crypto)}
+                  isPinned={isPinned(id)}
+                  onTogglePin={() => togglePin(id)}
+                  canPin={canPin}
+                />
+              );
+            }
+
+            // Data not loaded yet — show skeleton placeholder
             return (
-              <TickerCard
-                key={s.symbol}
-                symbol={s.symbol}
-                name={s.shortName}
-                price={s.regularMarketPrice}
-                changePercent={s.regularMarketChangePercent}
-                change={s.regularMarketChange}
-                isWatched={true}
-                onToggleWatch={() => handleToggleStock(s)}
-                onClick={() => setSelectedStock(s)}
-                isPinned={isPinned(id)}
-                onTogglePin={() => togglePin(id)}
-                canPin={canPin}
-              />
+              <div key={id} className="glass-card p-4 h-16 animate-pulse flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-secondary" />
+                <div className="flex-1">
+                  <div className="h-3 w-16 bg-secondary rounded mb-1.5" />
+                  <div className="h-2.5 w-24 bg-secondary rounded" />
+                </div>
+              </div>
             );
           })}
-          {sortedCryptos.map((c) => (
-            <TickerCard
-              key={c.id}
-              symbol={c.symbol}
-              name={c.name}
-              price={c.current_price}
-              changePercent={c.price_change_percentage_24h}
-              change={c.price_change_24h}
-              imageUrl={c.image}
-              isWatched={true}
-              onToggleWatch={() => handleToggleCrypto(c)}
-              onClick={() => setSelectedCrypto(c)}
-              isPinned={isPinned(c.id)}
-              onTogglePin={() => togglePin(c.id)}
-              canPin={canPin}
-            />
-          ))}
         </div>
       )}
 

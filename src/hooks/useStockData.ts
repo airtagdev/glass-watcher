@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
 
 export interface StockQuote {
   symbol: string;
@@ -27,11 +27,6 @@ async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
   const allResults: StockQuote[] = [];
   for (const chunk of chunks) {
     try {
-      const { data, error } = await supabase.functions.invoke("stock-proxy", {
-        body: null,
-        headers: { "Content-Type": "application/json" },
-      });
-      // Use GET via fetch directly for query params
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stock-proxy?action=quotes&symbols=${chunk.join(",")}`;
       const res = await fetch(url, {
         headers: {

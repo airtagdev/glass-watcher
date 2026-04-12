@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePopularStocks, useStockSearch, StockQuote } from "@/hooks/useStockData";
+import { usePopularStocks, useStockSearch, useStockDetail, StockQuote } from "@/hooks/useStockData";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
@@ -12,6 +12,8 @@ export default function StocksPage() {
   const { data: popular, isLoading } = usePopularStocks();
   const { data: searchResults } = useStockSearch(query);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
+  const [searchSelectedSymbol, setSearchSelectedSymbol] = useState<string | null>(null);
+  const { data: searchDetailData } = useStockDetail(searchSelectedSymbol || "");
 
   const handleToggle = (s: StockQuote) => {
     const id = `stock-${s.symbol}`;
@@ -20,14 +22,15 @@ export default function StocksPage() {
   };
 
   const handleSearchClick = (symbol: string) => {
-    // Try to find from already-loaded popular list
     const found = popular?.find((s) => s.symbol === symbol);
     if (found) {
       setSelectedStock(found);
+    } else {
+      setSearchSelectedSymbol(symbol);
     }
-    // If not in popular list, we still need to fetch — but set a placeholder
-    // The detail will show once the data arrives
   };
+
+  const detailStock = selectedStock || (searchDetailData && searchSelectedSymbol ? searchDetailData : null);
 
   const showSearch = query.length >= 1 && searchResults;
 
@@ -89,22 +92,22 @@ export default function StocksPage() {
         </div>
       )}
 
-      {selectedStock && (
+      {detailStock && (
         <TickerDetail
-          symbol={selectedStock.symbol}
-          name={selectedStock.shortName}
-          price={selectedStock.regularMarketPrice}
-          change={selectedStock.regularMarketChange}
-          changePercent={selectedStock.regularMarketChangePercent}
-          high52w={selectedStock.fiftyTwoWeekHigh}
-          low52w={selectedStock.fiftyTwoWeekLow}
-          marketCap={selectedStock.marketCap}
-          volume={selectedStock.regularMarketVolume}
-          dayHigh={selectedStock.regularMarketDayHigh}
-          dayLow={selectedStock.regularMarketDayLow}
-          isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
-          onToggleWatch={() => handleToggle(selectedStock)}
-          onClose={() => setSelectedStock(null)}
+          symbol={detailStock.symbol}
+          name={detailStock.shortName}
+          price={detailStock.regularMarketPrice}
+          change={detailStock.regularMarketChange}
+          changePercent={detailStock.regularMarketChangePercent}
+          high52w={detailStock.fiftyTwoWeekHigh}
+          low52w={detailStock.fiftyTwoWeekLow}
+          marketCap={detailStock.marketCap}
+          volume={detailStock.regularMarketVolume}
+          dayHigh={detailStock.regularMarketDayHigh}
+          dayLow={detailStock.regularMarketDayLow}
+          isWatched={isInWatchlist(`stock-${detailStock.symbol}`)}
+          onToggleWatch={() => handleToggle(detailStock)}
+          onClose={() => { setSelectedStock(null); setSearchSelectedSymbol(null); }}
         />
       )}
     </div>

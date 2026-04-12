@@ -1,5 +1,5 @@
-import { Plus, Check } from "lucide-react";
-import { formatCurrency, formatPercent, formatLargeNumber } from "@/lib/format";
+import { Plus, Check, Pin } from "lucide-react";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
 interface TickerCardProps {
   symbol: string;
@@ -11,6 +11,9 @@ interface TickerCardProps {
   isWatched: boolean;
   onToggleWatch: () => void;
   onClick: () => void;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+  canPin?: boolean;
 }
 
 export function TickerCard({
@@ -23,6 +26,9 @@ export function TickerCard({
   isWatched,
   onToggleWatch,
   onClick,
+  isPinned,
+  onTogglePin,
+  canPin,
 }: TickerCardProps) {
   const isPositive = changePercent >= 0;
 
@@ -40,7 +46,10 @@ export function TickerCard({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">{symbol.toUpperCase()}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-foreground truncate">{symbol.toUpperCase()}</p>
+          {isPinned && <Pin className="w-3 h-3 text-primary shrink-0" />}
+        </div>
         <p className="text-xs text-muted-foreground truncate">{name}</p>
       </div>
       <div className="text-right mr-2">
@@ -50,6 +59,25 @@ export function TickerCard({
           {formatPercent(changePercent)}
         </p>
       </div>
+      {isWatched && onTogglePin && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin();
+          }}
+          title={isPinned ? "Unpin" : canPin ? "Pin to top" : "Max 5 pins reached"}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            isPinned
+              ? "bg-primary/20 text-primary"
+              : canPin
+              ? "bg-secondary text-muted-foreground hover:text-foreground"
+              : "bg-secondary text-muted-foreground/40 cursor-not-allowed"
+          }`}
+          disabled={!isPinned && !canPin}
+        >
+          <Pin className="w-4 h-4" />
+        </button>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation();

@@ -14,54 +14,17 @@ const LOADING_MESSAGES = [
   "Warming up the engines...",
 ];
 
-const PROXIES = [
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-];
-
-async function fetchWithProxy(url: string): Promise<Response> {
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetch(proxy(url));
-      if (res.ok) return res;
-    } catch { /* try next */ }
-  }
-  throw new Error("All proxies failed");
-}
-
 async function prefetchStocks() {
-  const results = await Promise.all(
-    POPULAR_STOCKS.map(async (symbol) => {
-      try {
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
-        const res = await fetchWithProxy(yahooUrl);
-        const data = await res.json();
-        const result = data.chart?.result?.[0];
-        if (!result) return null;
-        const meta = result.meta;
-        const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
-        const price = meta.regularMarketPrice || 0;
-        const change = price - prevClose;
-        const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-        return {
-          symbol: meta.symbol || symbol,
-          shortName: meta.shortName || meta.longName || symbol,
-          regularMarketPrice: price,
-          regularMarketChange: change,
-          regularMarketChangePercent: changePercent,
-          regularMarketVolume: meta.regularMarketVolume || 0,
-          marketCap: 0,
-          fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
-          fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
-          regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
-          regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
-        };
-      } catch {
-        return null;
-      }
-    })
-  );
-  return results.filter(Boolean);
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stock-proxy?action=quotes&symbols=${POPULAR_STOCKS.join(",")}`;
+    const res = await fetch(url, {
+      headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
 async function prefetchCryptos() {

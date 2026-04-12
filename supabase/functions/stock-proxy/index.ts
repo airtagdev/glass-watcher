@@ -1,0 +1,104 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action");
+
+    if (action === "quotes") {
+      const symbols = url.searchParams.get("symbols") || "";
+      const symbolList = symbols.split(",").filter(Boolean);
+      
+      if (symbolList.length === 0) {
+        return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const results = await Promise.all(
+        symbolList.map(async (symbol) => {
+          try {
+            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+            const res = await fetch(yahooUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              },
+            });
+            if (!res.ok) {
+              console.error(`Yahoo API error for ${symbol}: ${res.status} ${await res.text()}`);
+              return null;
+            }
+            const data = await res.json();
+            const result = data.chart?.result?.[0];
+            if (!result) return null;
+            const meta = result.meta;
+            const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+            const price = meta.regularMarketPrice || 0;
+            const change = price - prevClose;
+            const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+            return {
+              symbol: meta.symbol || symbol,
+              shortName: meta.shortName || meta.longName || symbol,
+              regularMarketPrice: price,
+              regularMarketChange: change,
+              regularMarketChangePercent: changePercent,
+              regularMarketVolume: meta.regularMarketVolume || 0,
+              marketCap: 0,
+              fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
+              fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
+              regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
+              regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      return new Response(JSON.stringify(results.filter(Boolean)), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "search") {
+      const q = url.searchParams.get("q") || "";
+      if (!q) {
+        return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
+      const res = await fetch(yahooUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
+      const data = await res.json();
+      const quotes = (data.quotes || [])
+        .filter((item: any) => item.quoteType === "EQUITY")
+        .map((item: any) => ({
+          symbol: item.symbol,
+          shortname: item.shortname || item.longname || item.symbol,
+          exchDisp: item.exchDisp || "",
+        }));
+      return new Response(JSON.stringify(quotes), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid action" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

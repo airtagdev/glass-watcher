@@ -5,6 +5,15 @@ import { Progress } from "@/components/ui/progress";
 
 const POPULAR_STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "NFLX", "JPM", "V"];
 
+const LOADING_MESSAGES = [
+  "Getting a few things ready...",
+  "Polishing your experience...",
+  "Fetching crypto tickers...",
+  "Crunching the latest numbers...",
+  "Loading market insights...",
+  "Warming up the engines...",
+];
+
 const PROXIES = [
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -71,7 +80,20 @@ export function AppLoader({ children }: AppLoaderProps) {
   const queryClient = useQueryClient();
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Loading market data...");
+  const [status, setStatus] = useState(LOADING_MESSAGES[0]);
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    if (ready) return;
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => {
+        const next = (prev + 1) % LOADING_MESSAGES.length;
+        setStatus(LOADING_MESSAGES[next]);
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [ready]);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +117,7 @@ export function AppLoader({ children }: AppLoaderProps) {
       try {
         setProgress(5);
         smoothProgress(5, 40, 2000);
-        setStatus("Fetching stock prices...");
+        
 
         const stocksPromise = prefetchStocks();
         const cryptosPromise = prefetchCryptos();
@@ -103,13 +125,13 @@ export function AppLoader({ children }: AppLoaderProps) {
         const stocks = await stocksPromise;
         if (cancelled) return;
         smoothProgress(40, 65, 1000);
-        setStatus("Fetching crypto prices...");
+        
         queryClient.setQueryData(["popularStocks"], stocks);
 
         const cryptos = await cryptosPromise;
         if (cancelled) return;
         smoothProgress(65, 95, 800);
-        setStatus("Almost ready...");
+        
         queryClient.setQueryData(["topCryptos"], cryptos);
 
         await new Promise((r) => setTimeout(r, 600));

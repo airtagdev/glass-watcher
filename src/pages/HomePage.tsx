@@ -10,7 +10,7 @@ import { useState as useStateAlerts } from "react";
 import { ManageAlerts } from "@/components/ManageAlerts";
 
 export default function HomePage() {
-  const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist } = useWatchlist();
+  const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist, togglePin, isPinned, pinnedIds, pinCount, maxPins } = useWatchlist();
   const [showAlerts, setShowAlerts] = useStateAlerts(false);
   const cryptoIds = watchlist.filter((w) => w.type === "crypto").map((w) => w.id);
   const stockSymbols = watchlist.filter((w) => w.type === "stock").map((w) => w.symbol);
@@ -32,6 +32,19 @@ export default function HomePage() {
     if (isInWatchlist(id)) removeFromWatchlist(id);
     else addToWatchlist({ id, symbol: s.symbol, name: s.shortName, type: "stock" });
   };
+
+  // Sort: pinned first (in pin order), then unpinned
+  const sortByPinned = <T,>(items: T[], getId: (item: T) => string): T[] => {
+    const pinned = items.filter((i) => isPinned(getId(i)));
+    const unpinned = items.filter((i) => !isPinned(getId(i)));
+    pinned.sort((a, b) => pinnedIds.indexOf(getId(a)) - pinnedIds.indexOf(getId(b)));
+    return [...pinned, ...unpinned];
+  };
+
+  const sortedStocks = stockData ? sortByPinned(stockData, (s) => `stock-${s.symbol}`) : [];
+  const sortedCryptos = cryptoData ? sortByPinned(cryptoData, (c) => c.id) : [];
+
+  const canPin = pinCount < maxPins;
 
   return (
     <div className="px-4 pt-14 pb-24">
@@ -57,20 +70,26 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {stockData?.map((s) => (
-            <TickerCard
-              key={s.symbol}
-              symbol={s.symbol}
-              name={s.shortName}
-              price={s.regularMarketPrice}
-              changePercent={s.regularMarketChangePercent}
-              change={s.regularMarketChange}
-              isWatched={true}
-              onToggleWatch={() => handleToggleStock(s)}
-              onClick={() => setSelectedStock(s)}
-            />
-          ))}
-          {cryptoData?.map((c) => (
+          {sortedStocks.map((s) => {
+            const id = `stock-${s.symbol}`;
+            return (
+              <TickerCard
+                key={s.symbol}
+                symbol={s.symbol}
+                name={s.shortName}
+                price={s.regularMarketPrice}
+                changePercent={s.regularMarketChangePercent}
+                change={s.regularMarketChange}
+                isWatched={true}
+                onToggleWatch={() => handleToggleStock(s)}
+                onClick={() => setSelectedStock(s)}
+                isPinned={isPinned(id)}
+                onTogglePin={() => togglePin(id)}
+                canPin={canPin}
+              />
+            );
+          })}
+          {sortedCryptos.map((c) => (
             <TickerCard
               key={c.id}
               symbol={c.symbol}
@@ -82,6 +101,9 @@ export default function HomePage() {
               isWatched={true}
               onToggleWatch={() => handleToggleCrypto(c)}
               onClick={() => setSelectedCrypto(c)}
+              isPinned={isPinned(c.id)}
+              onTogglePin={() => togglePin(c.id)}
+              canPin={canPin}
             />
           ))}
         </div>

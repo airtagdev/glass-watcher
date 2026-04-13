@@ -49,6 +49,10 @@ export function usePortfolio() {
     setTrades((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const updateTrade = useCallback((id: string, updates: Partial<Omit<Trade, "id">>) => {
+    setTrades((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  }, []);
+
   const holdings = useMemo<PortfolioHolding[]>(() => {
     const map = new Map<string, PortfolioHolding>();
 

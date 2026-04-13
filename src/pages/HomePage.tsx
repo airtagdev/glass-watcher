@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useWatchlist, WatchlistItem } from "@/hooks/useWatchlist";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptosByIds } from "@/hooks/useCryptoData";
 import { useStockQuotes, useStockDetail, StockQuote } from "@/hooks/useStockData";
 import { TickerCard } from "@/components/TickerCard";
@@ -69,6 +70,7 @@ export default function HomePage() {
   const nasdaqPositive = nasdaqChange >= 0;
 
   return (
+    <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
@@ -241,5 +243,6 @@ export default function HomePage() {
 
       {showAlerts && <ManageAlerts onClose={() => setShowAlerts(false)} />}
     </div>
+    </PullToRefresh>
   );
 }

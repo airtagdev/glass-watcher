@@ -7,6 +7,7 @@ import { Briefcase, Plus, TrendingUp, TrendingDown, X, MoreVertical, Pencil, Tra
 import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade } = usePortfolio();
@@ -37,6 +38,7 @@ export default function PortfolioPage() {
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
 
   return (
+    <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -162,6 +164,7 @@ export default function PortfolioPage() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 }
 

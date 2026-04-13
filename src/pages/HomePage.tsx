@@ -65,6 +65,8 @@ export default function HomePage() {
 
   const sp500Change = sp500Data?.regularMarketChangePercent ?? 0;
   const sp500Positive = sp500Change >= 0;
+  const nasdaqChange = nasdaqData?.regularMarketChangePercent ?? 0;
+  const nasdaqPositive = nasdaqChange >= 0;
 
   return (
     <div className="px-4 pt-14 pb-24">
@@ -83,28 +85,33 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* S&P 500 Card */}
-      <div className="glass-card p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-0.5">S&P 500</p>
-            <p className="text-xl font-bold text-foreground">
-              {sp500Data ? formatCurrency(sp500Data.regularMarketPrice) : "—"}
-            </p>
-          </div>
-          <div className="text-right">
-            {sp500Data && (
-              <>
-                <div className={`flex items-center gap-1 justify-end ${sp500Positive ? "text-gain" : "text-loss"}`}>
-                  {sp500Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  <span className="text-sm font-semibold">{formatPercent(sp500Change)}</span>
-                </div>
-                <p className={`text-xs ${sp500Positive ? "text-gain" : "text-loss"}`}>
-                  {sp500Positive ? "+" : ""}{formatCurrency(sp500Data.regularMarketChange)}
-                </p>
-              </>
-            )}
-          </div>
+      {/* Index Cards */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* S&P 500 */}
+        <div className="glass-card p-3.5">
+          <p className="text-[10px] text-muted-foreground mb-0.5">S&P 500</p>
+          <p className="text-lg font-bold text-foreground">
+            {sp500Data ? formatCurrency(sp500Data.regularMarketPrice) : "—"}
+          </p>
+          {sp500Data && (
+            <div className={`flex items-center gap-1 mt-0.5 ${sp500Positive ? "text-gain" : "text-loss"}`}>
+              {sp500Positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <span className="text-xs font-semibold">{formatPercent(sp500Change)}</span>
+            </div>
+          )}
+        </div>
+        {/* Nasdaq */}
+        <div className="glass-card p-3.5">
+          <p className="text-[10px] text-muted-foreground mb-0.5">NASDAQ</p>
+          <p className="text-lg font-bold text-foreground">
+            {nasdaqData ? formatCurrency(nasdaqData.regularMarketPrice) : "—"}
+          </p>
+          {nasdaqData && (
+            <div className={`flex items-center gap-1 mt-0.5 ${nasdaqPositive ? "text-gain" : "text-loss"}`}>
+              {nasdaqPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <span className="text-xs font-semibold">{formatPercent(nasdaqChange)}</span>
+            </div>
+          )}
         </div>
       </div>
 

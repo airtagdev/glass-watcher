@@ -10,12 +10,13 @@ import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function PortfolioPage() {
-  const { holdings, trades, addTrade, removeTrade, updateTrade } = usePortfolio();
+  const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [expandedHolding, setExpandedHolding] = useState<string | null>(null);
   const [addTradeForHolding, setAddTradeForHolding] = useState<PortfolioHolding | null>(null);
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
+  const [deleteHoldingId, setDeleteHoldingId] = useState<string | null>(null);
 
   const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
   const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);
@@ -94,7 +95,7 @@ export default function PortfolioPage() {
                     <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
                     <p className="text-xs text-muted-foreground truncate">{h.tickerName}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right mr-1">
                     <p className="text-sm font-semibold text-foreground">
                       {currentValue ? formatCurrency(currentValue) : "—"}
                     </p>
@@ -104,6 +105,12 @@ export default function PortfolioPage() {
                       </p>
                     )}
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteHoldingId(h.tickerId); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-loss/10 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-loss" />
+                  </button>
                 </div>
                 <div className="mt-3 pt-3 border-t border-glass-border/30 grid grid-cols-3 gap-2 text-center">
                   <div>
@@ -198,6 +205,30 @@ export default function PortfolioPage() {
                 className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteHoldingId && (
+        <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center">
+            <Trash2 className="w-8 h-8 text-loss mx-auto mb-3" />
+            <h3 className="text-base font-bold text-foreground mb-1">Delete All Trades?</h3>
+            <p className="text-xs text-muted-foreground mb-4">This will remove the entire holding and all its trades. This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteHoldingId(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { removeHolding(deleteHoldingId); setDeleteHoldingId(null); }}
+                className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
+              >
+                Delete All
               </button>
             </div>
           </div>

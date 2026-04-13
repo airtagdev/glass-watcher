@@ -53,6 +53,10 @@ export function usePortfolio() {
     setTrades((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
   }, []);
 
+  const removeHolding = useCallback((tickerId: string) => {
+    setTrades((prev) => prev.filter((t) => t.tickerId !== tickerId));
+  }, []);
+
   const holdings = useMemo<PortfolioHolding[]>(() => {
     const map = new Map<string, PortfolioHolding>();
 
@@ -91,5 +95,5 @@ export function usePortfolio() {
     return Array.from(map.values()).filter((h) => h.totalQuantity > 0);
   }, [trades]);
 
-  return { trades, holdings, addTrade, removeTrade, updateTrade };
+  return { trades, holdings, addTrade, removeTrade, updateTrade, removeHolding };
 }

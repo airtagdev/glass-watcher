@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { HoldToDeleteButton } from "@/components/HoldToDeleteButton";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();

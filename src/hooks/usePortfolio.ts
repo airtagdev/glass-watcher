@@ -87,5 +87,5 @@ export function usePortfolio() {
     return Array.from(map.values()).filter((h) => h.totalQuantity > 0);
   }, [trades]);
 
-  return { trades, holdings, addTrade, removeTrade };
+  return { trades, holdings, addTrade, removeTrade, updateTrade };
 }

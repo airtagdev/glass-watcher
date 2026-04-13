@@ -26,8 +26,9 @@ export default function HomePage() {
   const { data: cryptoData } = useCryptosByIds(cryptoIds);
   const { data: stockData } = useStockQuotes(stockSymbols);
 
-  // S&P 500 data
+  // S&P 500 & Nasdaq data
   const { data: sp500Data } = useStockDetail("^GSPC");
+  const { data: nasdaqData } = useStockDetail("^IXIC");
 
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoTicker | null>(null);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);

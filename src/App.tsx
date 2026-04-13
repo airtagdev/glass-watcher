@@ -5,10 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { AppLoader } from "@/components/AppLoader";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import StocksPage from "./pages/StocksPage";
 import CryptoPage from "./pages/CryptoPage";
-import SearchPage from "./pages/SearchPage";
+import PortfolioPage from "./pages/PortfolioPage";
 import NewsPage from "./pages/NewsPage";
 import TrendingPage from "./pages/TrendingPage";
 import NotFound from "./pages/NotFound";
@@ -21,13 +22,14 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AppLoader>
           <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/stocks" element={<StocksPage />} />
               <Route path="/crypto" element={<CryptoPage />} />
-              <Route path="/search" element={<SearchPage />} />
+              <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/trending" element={<TrendingPage />} />
               <Route path="*" element={<NotFound />} />

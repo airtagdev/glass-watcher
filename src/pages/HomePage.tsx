@@ -1,12 +1,14 @@
 import { useState, useMemo } from "react";
 import { useWatchlist, WatchlistItem } from "@/hooks/useWatchlist";
 import { useCryptosByIds } from "@/hooks/useCryptoData";
-import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
+import { useStockQuotes, useStockDetail, StockQuote } from "@/hooks/useStockData";
 import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { CryptoTicker } from "@/hooks/useCryptoData";
-import { Eye, Sparkles, Bell } from "lucide-react";
+import { Home, Eye, Bell, Briefcase, TrendingUp, TrendingDown } from "lucide-react";
 import { ManageAlerts } from "@/components/ManageAlerts";
+import { formatCurrency, formatPercent } from "@/lib/format";
+import { useNavigate } from "react-router-dom";
 
 type WatchlistEntry = {
   watchlistItem: WatchlistItem;
@@ -15,6 +17,7 @@ type WatchlistEntry = {
 };
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist, togglePin, isPinned, pinnedIds, pinCount, maxPins } = useWatchlist();
   const [showAlerts, setShowAlerts] = useState(false);
   const cryptoIds = watchlist.filter((w) => w.type === "crypto").map((w) => w.id);
@@ -22,6 +25,9 @@ export default function HomePage() {
 
   const { data: cryptoData } = useCryptosByIds(cryptoIds);
   const { data: stockData } = useStockQuotes(stockSymbols);
+
+  // S&P 500 data
+  const { data: sp500Data } = useStockDetail("^GSPC");
 
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoTicker | null>(null);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
@@ -38,7 +44,6 @@ export default function HomePage() {
     else addToWatchlist({ id, symbol: s.symbol, name: s.shortName, type: "stock" });
   };
 
-  // Build a combined, sorted list: pinned first (in pin order), then unpinned (in watchlist order)
   const entries = useMemo<WatchlistEntry[]>(() => {
     const result: WatchlistEntry[] = watchlist.map((item) => {
       if (item.type === "stock") {
@@ -49,8 +54,6 @@ export default function HomePage() {
         return { watchlistItem: item, crypto };
       }
     });
-
-    // Sort: pinned items first in pin order, then unpinned in original order
     const pinned = result.filter((e) => isPinned(e.watchlistItem.id));
     const unpinned = result.filter((e) => !isPinned(e.watchlistItem.id));
     pinned.sort((a, b) => pinnedIds.indexOf(a.watchlistItem.id) - pinnedIds.indexOf(b.watchlistItem.id));
@@ -59,20 +62,70 @@ export default function HomePage() {
 
   const canPin = pinCount < maxPins;
 
+  const sp500Change = sp500Data?.regularMarketChangePercent ?? 0;
+  const sp500Positive = sp500Change >= 0;
+
   return (
     <div className="px-4 pt-14 pb-24">
-      <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Watchlist</h1>
+          <Home className="w-5 h-5 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Home</h1>
         </div>
         <button
           onClick={() => setShowAlerts(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs font-semibold text-foreground"
         >
           <Bell className="w-3.5 h-3.5" />
-          Manage Alerts
+          Alerts
         </button>
+      </div>
+
+      {/* S&P 500 Card */}
+      <div className="glass-card p-4 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">S&P 500</p>
+            <p className="text-xl font-bold text-foreground">
+              {sp500Data ? formatCurrency(sp500Data.regularMarketPrice) : "—"}
+            </p>
+          </div>
+          <div className="text-right">
+            {sp500Data && (
+              <>
+                <div className={`flex items-center gap-1 justify-end ${sp500Positive ? "text-gain" : "text-loss"}`}>
+                  {sp500Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  <span className="text-sm font-semibold">{formatPercent(sp500Change)}</span>
+                </div>
+                <p className={`text-xs ${sp500Positive ? "text-gain" : "text-loss"}`}>
+                  {sp500Positive ? "+" : ""}{formatCurrency(sp500Data.regularMarketChange)}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Portfolio Button */}
+      <button
+        onClick={() => navigate("/portfolio")}
+        className="w-full glass-card p-4 mb-6 flex items-center gap-3 active:scale-[0.98] transition-transform"
+      >
+        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+          <Briefcase className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold text-foreground">Portfolio</p>
+          <p className="text-xs text-muted-foreground">Track your trades & P&L</p>
+        </div>
+        <span className="text-muted-foreground text-lg">›</span>
+      </button>
+
+      {/* Watchlist Section */}
+      <div className="flex items-center gap-2 mb-3">
+        <Eye className="w-4 h-4 text-primary" />
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Watchlist</h2>
       </div>
 
       {watchlist.length === 0 ? (
@@ -126,7 +179,6 @@ export default function HomePage() {
               );
             }
 
-            // Data not loaded yet — show skeleton placeholder
             return (
               <div key={id} className="glass-card p-4 h-16 animate-pulse flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-secondary" />

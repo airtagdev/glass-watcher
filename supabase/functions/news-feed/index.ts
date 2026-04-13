@@ -1,4 +1,7 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const CRYPTO_NEWS_URL = "https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular";
 const STOCK_NEWS_URL = "https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL,MSFT,GOOGL,AMZN,TSLA,NVDA,META&region=US&lang=en-US";

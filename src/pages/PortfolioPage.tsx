@@ -7,6 +7,7 @@ import { Briefcase, Plus, TrendingUp, TrendingDown, X, MoreVertical, Pencil, Tra
 import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade } = usePortfolio();

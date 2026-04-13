@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNews, NewsItem } from "@/hooks/useNews";
 import { Newspaper, ExternalLink, Clock, TrendingUp, Bitcoin, Filter } from "lucide-react";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();

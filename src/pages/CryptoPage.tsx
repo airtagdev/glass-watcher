@@ -5,6 +5,7 @@ import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { Input } from "@/components/ui/input";
 import { Search, Bitcoin } from "lucide-react";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function CryptoPage() {
   const [query, setQuery] = useState("");

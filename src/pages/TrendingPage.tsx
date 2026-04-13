@@ -5,6 +5,7 @@ import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerDetail } from "@/components/TickerDetail";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { Flame, Plus, Check } from "lucide-react";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 interface TrendingItem {
   id: string;

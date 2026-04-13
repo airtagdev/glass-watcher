@@ -5,6 +5,7 @@ import { TickerCard } from "@/components/TickerCard";
 import { TickerDetail } from "@/components/TickerDetail";
 import { Input } from "@/components/ui/input";
 import { Search, TrendingUp } from "lucide-react";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function StocksPage() {
   const [query, setQuery] = useState("");

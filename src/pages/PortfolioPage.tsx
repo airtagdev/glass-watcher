@@ -136,9 +136,15 @@ export default function PortfolioPage() {
                         key={trade.id}
                         trade={trade}
                         onEdit={() => setEditingTrade(trade)}
-                        onDelete={() => removeTrade(trade.id)}
+                        onDelete={() => setDeleteTradeId(trade.id)}
                       />
                     ))}
+                    <button
+                      onClick={() => setAddTradeForHolding(h)}
+                      className="w-full py-2 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Trade
+                    </button>
                   </div>
                 )}
               </div>

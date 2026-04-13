@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePortfolio, Trade } from "@/hooks/usePortfolio";
+import { usePortfolio, Trade, PortfolioHolding } from "@/hooks/usePortfolio";
 import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { useCryptosByIds, CryptoTicker } from "@/hooks/useCryptoData";
 import { formatCurrency, formatPercent } from "@/lib/format";
@@ -14,6 +14,8 @@ export default function PortfolioPage() {
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [expandedHolding, setExpandedHolding] = useState<string | null>(null);
+  const [addTradeForHolding, setAddTradeForHolding] = useState<PortfolioHolding | null>(null);
+  const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
 
   const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
   const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);
@@ -134,9 +136,15 @@ export default function PortfolioPage() {
                         key={trade.id}
                         trade={trade}
                         onEdit={() => setEditingTrade(trade)}
-                        onDelete={() => removeTrade(trade.id)}
+                        onDelete={() => setDeleteTradeId(trade.id)}
                       />
                     ))}
+                    <button
+                      onClick={() => setAddTradeForHolding(h)}
+                      className="w-full py-2 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Trade
+                    </button>
                   </div>
                 )}
               </div>
@@ -149,6 +157,14 @@ export default function PortfolioPage() {
         <AddTradeModal onClose={() => setShowAddTrade(false)} onAdd={addTrade} />
       )}
 
+      {addTradeForHolding && (
+        <AddTradeModal
+          onClose={() => setAddTradeForHolding(null)}
+          onAdd={(t) => { addTrade(t); setAddTradeForHolding(null); }}
+          preselected={{ id: addTradeForHolding.tickerId, symbol: addTradeForHolding.tickerSymbol, name: addTradeForHolding.tickerName, type: addTradeForHolding.tickerType }}
+        />
+      )}
+
       {editingTrade && (
         <EditTradeModal
           trade={editingTrade}
@@ -158,10 +174,34 @@ export default function PortfolioPage() {
             setEditingTrade(null);
           }}
           onDelete={() => {
-            removeTrade(editingTrade.id);
+            setDeleteTradeId(editingTrade.id);
             setEditingTrade(null);
           }}
         />
+      )}
+
+      {deleteTradeId && (
+        <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center">
+            <Trash2 className="w-8 h-8 text-loss mx-auto mb-3" />
+            <h3 className="text-base font-bold text-foreground mb-1">Delete Trade?</h3>
+            <p className="text-xs text-muted-foreground mb-4">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteTradeId(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { removeTrade(deleteTradeId); setDeleteTradeId(null); }}
+                className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
     </PullToRefresh>
@@ -323,10 +363,10 @@ function EditTradeModal({
   );
 }
 
-function AddTradeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Omit<Trade, "id">) => void }) {
-  const [step, setStep] = useState<"search" | "form">("search");
+function AddTradeModal({ onClose, onAdd, preselected }: { onClose: () => void; onAdd: (t: Omit<Trade, "id">) => void; preselected?: { id: string; symbol: string; name: string; type: "stock" | "crypto" } }) {
+  const [step, setStep] = useState<"search" | "form">(preselected ? "form" : "search");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; type: "stock" | "crypto" } | null>(null);
+  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; type: "stock" | "crypto" } | null>(preselected || null);
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");

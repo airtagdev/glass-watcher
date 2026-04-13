@@ -10,12 +10,13 @@ import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function PortfolioPage() {
-  const { holdings, trades, addTrade, removeTrade, updateTrade } = usePortfolio();
+  const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [expandedHolding, setExpandedHolding] = useState<string | null>(null);
   const [addTradeForHolding, setAddTradeForHolding] = useState<PortfolioHolding | null>(null);
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
+  const [deleteHoldingId, setDeleteHoldingId] = useState<string | null>(null);
 
   const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
   const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);

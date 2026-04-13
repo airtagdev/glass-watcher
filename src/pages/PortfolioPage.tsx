@@ -501,6 +501,5 @@ function AddTradeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Omi
         )}
       </div>
     </div>
-    </PullToRefresh>
   );
 }

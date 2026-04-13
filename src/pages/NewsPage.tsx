@@ -27,6 +27,7 @@ export default function NewsPage() {
   ];
 
   return (
+    <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
       <div className="flex items-center gap-2 mb-4">
         <Newspaper className="w-5 h-5 text-primary" />
@@ -171,5 +172,6 @@ export default function NewsPage() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }

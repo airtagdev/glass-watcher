@@ -38,6 +38,7 @@ export default function PortfolioPage() {
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
 
   return (
+    <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -499,5 +500,6 @@ function AddTradeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Omi
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }

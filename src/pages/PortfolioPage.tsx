@@ -2,18 +2,18 @@ import { useState } from "react";
 import { usePortfolio, Trade } from "@/hooks/usePortfolio";
 import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { useCryptosByIds, CryptoTicker } from "@/hooks/useCryptoData";
-import { useWatchlist } from "@/hooks/useWatchlist";
-import { formatCurrency, formatPercent, formatLargeNumber } from "@/lib/format";
-import { Briefcase, Plus, Trash2, TrendingUp, TrendingDown, X } from "lucide-react";
+import { formatCurrency, formatPercent } from "@/lib/format";
+import { Briefcase, Plus, TrendingUp, TrendingDown, X, MoreVertical, Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
 
 export default function PortfolioPage() {
-  const { holdings, trades, addTrade, removeTrade } = usePortfolio();
+  const { holdings, trades, addTrade, removeTrade, updateTrade } = usePortfolio();
   const [showAddTrade, setShowAddTrade] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
+  const [expandedHolding, setExpandedHolding] = useState<string | null>(null);
 
-  // Fetch live prices for holdings
   const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
   const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);
   const { data: stockPrices } = useStockQuotes(stockSymbols);
@@ -21,14 +21,11 @@ export default function PortfolioPage() {
 
   const getLivePrice = (h: typeof holdings[0]): number | null => {
     if (h.tickerType === "stock") {
-      const s = stockPrices?.find((sp) => sp.symbol === h.tickerSymbol);
-      return s?.regularMarketPrice ?? null;
+      return stockPrices?.find((sp) => sp.symbol === h.tickerSymbol)?.regularMarketPrice ?? null;
     }
-    const c = cryptoPrices?.find((cp) => cp.id === h.tickerId);
-    return c?.current_price ?? null;
+    return cryptoPrices?.find((cp) => cp.id === h.tickerId)?.current_price ?? null;
   };
 
-  // Portfolio totals
   let totalValue = 0;
   let totalCost = 0;
   for (const h of holdings) {
@@ -55,7 +52,6 @@ export default function PortfolioPage() {
         </button>
       </div>
 
-      {/* Portfolio summary */}
       <div className="glass-card p-5 mb-6">
         <p className="text-xs text-muted-foreground mb-1">Total Portfolio Value</p>
         <p className="text-2xl font-bold text-foreground">{formatCurrency(totalValue)}</p>
@@ -82,6 +78,7 @@ export default function PortfolioPage() {
             const currentValue = livePrice ? livePrice * h.totalQuantity : null;
             const pnl = currentValue ? currentValue - h.totalCost : null;
             const pnlPercent = pnl && h.totalCost > 0 ? (pnl / h.totalCost) * 100 : null;
+            const isExpanded = expandedHolding === h.tickerId;
 
             return (
               <div key={h.tickerId} className="glass-card p-4">
@@ -118,6 +115,28 @@ export default function PortfolioPage() {
                     <p className="text-xs font-semibold text-foreground">{livePrice ? formatCurrency(livePrice) : "—"}</p>
                   </div>
                 </div>
+
+                {/* Expand/collapse trades */}
+                <button
+                  onClick={() => setExpandedHolding(isExpanded ? null : h.tickerId)}
+                  className="w-full mt-3 pt-2 border-t border-glass-border/20 flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {h.trades.length} trade{h.trades.length !== 1 ? "s" : ""}
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {h.trades.map((trade) => (
+                      <TradeRow
+                        key={trade.id}
+                        trade={trade}
+                        onEdit={() => setEditingTrade(trade)}
+                        onDelete={() => removeTrade(trade.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -127,6 +146,176 @@ export default function PortfolioPage() {
       {showAddTrade && (
         <AddTradeModal onClose={() => setShowAddTrade(false)} onAdd={addTrade} />
       )}
+
+      {editingTrade && (
+        <EditTradeModal
+          trade={editingTrade}
+          onClose={() => setEditingTrade(null)}
+          onSave={(updates) => {
+            updateTrade(editingTrade.id, updates);
+            setEditingTrade(null);
+          }}
+          onDelete={() => {
+            removeTrade(editingTrade.id);
+            setEditingTrade(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function TradeRow({ trade, onEdit, onDelete }: { trade: Trade; onEdit: () => void; onDelete: () => void }) {
+  const [showMenu, setShowMenu] = useState(false);
+  const isBuy = trade.type === "buy";
+
+  return (
+    <div className="relative flex items-center gap-3 p-2.5 rounded-xl bg-secondary/30">
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isBuy ? "bg-gain/20" : "bg-loss/20"}`}>
+        {isBuy ? <TrendingUp className="w-3 h-3 text-gain" /> : <TrendingDown className="w-3 h-3 text-loss" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-foreground">
+          {isBuy ? "Buy" : "Sell"} · {trade.quantity} @ {formatCurrency(trade.price)}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {new Date(trade.date).toLocaleDateString()} · Total: {formatCurrency(trade.price * trade.quantity)}
+        </p>
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+        className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-secondary transition-colors"
+      >
+        <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+      </button>
+
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+          <div className="absolute right-0 top-full mt-1 z-50 glass-card rounded-xl shadow-lg overflow-hidden min-w-[120px]">
+            <button
+              onClick={() => { setShowMenu(false); onEdit(); }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <Pencil className="w-3 h-3" /> Edit Trade
+            </button>
+            <button
+              onClick={() => { setShowMenu(false); onDelete(); }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-loss hover:bg-loss/10 transition-colors"
+            >
+              <Trash2 className="w-3 h-3" /> Delete Trade
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function EditTradeModal({
+  trade,
+  onClose,
+  onSave,
+  onDelete,
+}: {
+  trade: Trade;
+  onClose: () => void;
+  onSave: (updates: Partial<Omit<Trade, "id">>) => void;
+  onDelete: () => void;
+}) {
+  const [tradeType, setTradeType] = useState<"buy" | "sell">(trade.type);
+  const [price, setPrice] = useState(String(trade.price));
+  const [quantity, setQuantity] = useState(String(trade.quantity));
+
+  const handleSave = () => {
+    if (!price || !quantity) return;
+    onSave({ type: tradeType, price: parseFloat(price), quantity: parseFloat(quantity) });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
+      <div className="glass-card w-full max-w-md p-5 rounded-t-2xl sm:rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground">Edit Trade</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="glass p-3 rounded-xl flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
+            {trade.tickerSymbol.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{trade.tickerSymbol.toUpperCase()}</p>
+            <p className="text-xs text-muted-foreground">{trade.tickerName}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTradeType("buy")}
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                tradeType === "buy" ? "bg-gain/20 text-gain" : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 inline mr-1" /> Buy
+            </button>
+            <button
+              onClick={() => setTradeType("sell")}
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                tradeType === "sell" ? "bg-loss/20 text-loss" : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              <TrendingDown className="w-4 h-4 inline mr-1" /> Sell
+            </button>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Price per unit ($)</label>
+            <Input
+              type="number"
+              step="any"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="glass border-glass-border/50 rounded-xl"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Quantity</label>
+            <Input
+              type="number"
+              step="any"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="glass border-glass-border/50 rounded-xl"
+            />
+          </div>
+
+          {price && quantity && (
+            <div className="text-center text-sm text-muted-foreground">
+              Total: <span className="text-foreground font-semibold">{formatCurrency(parseFloat(price) * parseFloat(quantity))}</span>
+            </div>
+          )}
+
+          <button
+            onClick={handleSave}
+            disabled={!price || !quantity}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40"
+          >
+            Save Changes
+          </button>
+
+          <button
+            onClick={onDelete}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-loss hover:bg-loss/10 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5 inline mr-1" /> Delete Trade
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

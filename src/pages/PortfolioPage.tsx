@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePortfolio, Trade } from "@/hooks/usePortfolio";
+import { usePortfolio, Trade, PortfolioHolding } from "@/hooks/usePortfolio";
 import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { useCryptosByIds, CryptoTicker } from "@/hooks/useCryptoData";
 import { formatCurrency, formatPercent } from "@/lib/format";

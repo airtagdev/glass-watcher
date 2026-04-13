@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { HoldToDeleteButton } from "@/components/HoldToDeleteButton";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();
@@ -189,22 +190,20 @@ export default function PortfolioPage() {
 
       {deleteTradeId && (
         <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center">
+          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center animate-scale-in">
             <Trash2 className="w-8 h-8 text-loss mx-auto mb-3" />
             <h3 className="text-base font-bold text-foreground mb-1">Delete Trade?</h3>
-            <p className="text-xs text-muted-foreground mb-4">This action cannot be undone.</p>
-            <div className="flex gap-2">
+            <p className="text-xs text-muted-foreground mb-4">Hold the button for 3 seconds to confirm.</p>
+            <div className="flex flex-col gap-2">
+              <HoldToDeleteButton
+                label="Hold to Delete"
+                onDelete={() => { removeTrade(deleteTradeId); setDeleteTradeId(null); }}
+              />
               <button
                 onClick={() => setDeleteTradeId(null)}
-                className="flex-1 py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
+                className="w-full py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
               >
                 Cancel
-              </button>
-              <button
-                onClick={() => { removeTrade(deleteTradeId); setDeleteTradeId(null); }}
-                className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
-              >
-                Delete
               </button>
             </div>
           </div>
@@ -213,22 +212,20 @@ export default function PortfolioPage() {
 
       {deleteHoldingId && (
         <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center">
+          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center animate-scale-in">
             <Trash2 className="w-8 h-8 text-loss mx-auto mb-3" />
             <h3 className="text-base font-bold text-foreground mb-1">Delete All Trades?</h3>
-            <p className="text-xs text-muted-foreground mb-4">This will remove the entire holding and all its trades. This action cannot be undone.</p>
-            <div className="flex gap-2">
+            <p className="text-xs text-muted-foreground mb-4">Hold the button for 3 seconds to remove this entire holding.</p>
+            <div className="flex flex-col gap-2">
+              <HoldToDeleteButton
+                label="Hold to Delete All"
+                onDelete={() => { removeHolding(deleteHoldingId); setDeleteHoldingId(null); }}
+              />
               <button
                 onClick={() => setDeleteHoldingId(null)}
-                className="flex-1 py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
+                className="w-full py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
               >
                 Cancel
-              </button>
-              <button
-                onClick={() => { removeHolding(deleteHoldingId); setDeleteHoldingId(null); }}
-                className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
-              >
-                Delete All
               </button>
             </div>
           </div>

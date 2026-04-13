@@ -1,0 +1,313 @@
+import { useState } from "react";
+import { usePortfolio, Trade } from "@/hooks/usePortfolio";
+import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
+import { useCryptosByIds, CryptoTicker } from "@/hooks/useCryptoData";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import { formatCurrency, formatPercent, formatLargeNumber } from "@/lib/format";
+import { Briefcase, Plus, Trash2, TrendingUp, TrendingDown, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useStockSearch } from "@/hooks/useStockData";
+import { useCryptoSearch } from "@/hooks/useCryptoData";
+
+export default function PortfolioPage() {
+  const { holdings, trades, addTrade, removeTrade } = usePortfolio();
+  const [showAddTrade, setShowAddTrade] = useState(false);
+
+  // Fetch live prices for holdings
+  const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
+  const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);
+  const { data: stockPrices } = useStockQuotes(stockSymbols);
+  const { data: cryptoPrices } = useCryptosByIds(cryptoIds);
+
+  const getLivePrice = (h: typeof holdings[0]): number | null => {
+    if (h.tickerType === "stock") {
+      const s = stockPrices?.find((sp) => sp.symbol === h.tickerSymbol);
+      return s?.regularMarketPrice ?? null;
+    }
+    const c = cryptoPrices?.find((cp) => cp.id === h.tickerId);
+    return c?.current_price ?? null;
+  };
+
+  // Portfolio totals
+  let totalValue = 0;
+  let totalCost = 0;
+  for (const h of holdings) {
+    const live = getLivePrice(h);
+    if (live) totalValue += live * h.totalQuantity;
+    totalCost += h.totalCost;
+  }
+  const totalPnl = totalValue - totalCost;
+  const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+
+  return (
+    <div className="px-4 pt-14 pb-24">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Portfolio</h1>
+        </div>
+        <button
+          onClick={() => setShowAddTrade(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs font-semibold text-foreground"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Trade
+        </button>
+      </div>
+
+      {/* Portfolio summary */}
+      <div className="glass-card p-5 mb-6">
+        <p className="text-xs text-muted-foreground mb-1">Total Portfolio Value</p>
+        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalValue)}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className={`text-sm font-medium ${totalPnl >= 0 ? "text-gain" : "text-loss"}`}>
+            {totalPnl >= 0 ? "+" : ""}{formatCurrency(totalPnl)}
+          </span>
+          <span className={`text-xs ${totalPnl >= 0 ? "text-gain" : "text-loss"}`}>
+            ({formatPercent(totalPnlPercent)})
+          </span>
+        </div>
+      </div>
+
+      {holdings.length === 0 ? (
+        <div className="glass-card p-8 text-center">
+          <Briefcase className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">No holdings yet.</p>
+          <p className="text-muted-foreground text-xs mt-1">Add a trade to get started.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {holdings.map((h) => {
+            const livePrice = getLivePrice(h);
+            const currentValue = livePrice ? livePrice * h.totalQuantity : null;
+            const pnl = currentValue ? currentValue - h.totalCost : null;
+            const pnlPercent = pnl && h.totalCost > 0 ? (pnl / h.totalCost) * 100 : null;
+
+            return (
+              <div key={h.tickerId} className="glass-card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
+                    {h.tickerSymbol.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
+                    <p className="text-xs text-muted-foreground truncate">{h.tickerName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">
+                      {currentValue ? formatCurrency(currentValue) : "—"}
+                    </p>
+                    {pnl !== null && pnlPercent !== null && (
+                      <p className={`text-xs font-medium ${pnl >= 0 ? "text-gain" : "text-loss"}`}>
+                        {pnl >= 0 ? "+" : ""}{formatCurrency(pnl)} ({formatPercent(pnlPercent)})
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-glass-border/30 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Shares</p>
+                    <p className="text-xs font-semibold text-foreground">{h.totalQuantity.toFixed(4)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Avg Cost</p>
+                    <p className="text-xs font-semibold text-foreground">{formatCurrency(h.avgCostBasis)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Live Price</p>
+                    <p className="text-xs font-semibold text-foreground">{livePrice ? formatCurrency(livePrice) : "—"}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {showAddTrade && (
+        <AddTradeModal onClose={() => setShowAddTrade(false)} onAdd={addTrade} />
+      )}
+    </div>
+  );
+}
+
+function AddTradeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Omit<Trade, "id">) => void }) {
+  const [step, setStep] = useState<"search" | "form">("search");
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; type: "stock" | "crypto" } | null>(null);
+  const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
+
+  const { data: stockResults } = useStockSearch(query);
+  const { data: cryptoResults } = useCryptoSearch(query);
+
+  const handleSelect = (id: string, symbol: string, name: string, type: "stock" | "crypto") => {
+    setSelected({ id, symbol, name, type });
+    setStep("form");
+  };
+
+  const handleSubmit = () => {
+    if (!selected || !price || !quantity) return;
+    onAdd({
+      tickerId: selected.id,
+      tickerSymbol: selected.symbol,
+      tickerName: selected.name,
+      tickerType: selected.type,
+      type: tradeType,
+      price: parseFloat(price),
+      quantity: parseFloat(quantity),
+      date: new Date().toISOString(),
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
+      <div className="glass-card w-full max-w-md max-h-[80vh] overflow-y-auto p-5 rounded-t-2xl sm:rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground">
+            {step === "search" ? "Select Ticker" : `Add ${tradeType === "buy" ? "Buy" : "Sell"}`}
+          </h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {step === "search" && (
+          <>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search ticker..."
+              className="mb-4 glass border-glass-border/50 rounded-xl"
+              autoFocus
+            />
+            {stockResults && stockResults.length > 0 && (
+              <div className="mb-3">
+                <p className="text-[10px] uppercase text-muted-foreground font-semibold mb-2">Stocks</p>
+                {stockResults.slice(0, 5).map((r) => (
+                  <button
+                    key={r.symbol}
+                    onClick={() => handleSelect(`stock-${r.symbol}`, r.symbol, r.shortname, "stock")}
+                    className="w-full text-left p-3 rounded-xl hover:bg-secondary/50 transition-colors flex items-center gap-3"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
+                      {r.symbol.slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{r.symbol}</p>
+                      <p className="text-xs text-muted-foreground">{r.shortname}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {cryptoResults && cryptoResults.length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground font-semibold mb-2">Crypto</p>
+                {cryptoResults.slice(0, 5).map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => handleSelect(r.id, r.symbol, r.name, "crypto")}
+                    className="w-full text-left p-3 rounded-xl hover:bg-secondary/50 transition-colors flex items-center gap-3"
+                  >
+                    {r.thumb ? (
+                      <img src={r.thumb} className="w-7 h-7 rounded-full" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold">
+                        {r.symbol.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{r.symbol.toUpperCase()}</p>
+                      <p className="text-xs text-muted-foreground">{r.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {step === "form" && selected && (
+          <div className="flex flex-col gap-4">
+            <div className="glass p-3 rounded-xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
+                {selected.symbol.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{selected.symbol.toUpperCase()}</p>
+                <p className="text-xs text-muted-foreground">{selected.name}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTradeType("buy")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  tradeType === "buy" ? "bg-gain/20 text-gain" : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                <TrendingUp className="w-4 h-4 inline mr-1" /> Buy
+              </button>
+              <button
+                onClick={() => setTradeType("sell")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  tradeType === "sell" ? "bg-loss/20 text-loss" : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                <TrendingDown className="w-4 h-4 inline mr-1" /> Sell
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Price per unit ($)</label>
+              <Input
+                type="number"
+                step="any"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00"
+                className="glass border-glass-border/50 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Quantity</label>
+              <Input
+                type="number"
+                step="any"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="0"
+                className="glass border-glass-border/50 rounded-xl"
+              />
+            </div>
+
+            {price && quantity && (
+              <div className="text-center text-sm text-muted-foreground">
+                Total: <span className="text-foreground font-semibold">{formatCurrency(parseFloat(price) * parseFloat(quantity))}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={!price || !quantity}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40"
+            >
+              Add {tradeType === "buy" ? "Buy" : "Sell"} Trade
+            </button>
+
+            <button
+              onClick={() => { setStep("search"); setSelected(null); }}
+              className="text-xs text-muted-foreground text-center"
+            >
+              ← Back to search
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

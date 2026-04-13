@@ -95,7 +95,7 @@ export default function PortfolioPage() {
                     <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
                     <p className="text-xs text-muted-foreground truncate">{h.tickerName}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right mr-1">
                     <p className="text-sm font-semibold text-foreground">
                       {currentValue ? formatCurrency(currentValue) : "—"}
                     </p>
@@ -105,6 +105,12 @@ export default function PortfolioPage() {
                       </p>
                     )}
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteHoldingId(h.tickerId); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-loss/10 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-loss" />
+                  </button>
                 </div>
                 <div className="mt-3 pt-3 border-t border-glass-border/30 grid grid-cols-3 gap-2 text-center">
                   <div>

@@ -363,10 +363,10 @@ function EditTradeModal({
   );
 }
 
-function AddTradeModal({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Omit<Trade, "id">) => void }) {
-  const [step, setStep] = useState<"search" | "form">("search");
+function AddTradeModal({ onClose, onAdd, preselected }: { onClose: () => void; onAdd: (t: Omit<Trade, "id">) => void; preselected?: { id: string; symbol: string; name: string; type: "stock" | "crypto" } }) {
+  const [step, setStep] = useState<"search" | "form">(preselected ? "form" : "search");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; type: "stock" | "crypto" } | null>(null);
+  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; type: "stock" | "crypto" } | null>(preselected || null);
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");

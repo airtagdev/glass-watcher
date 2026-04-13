@@ -210,6 +210,30 @@ export default function PortfolioPage() {
           </div>
         </div>
       )}
+
+      {deleteHoldingId && (
+        <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="glass-card w-full max-w-xs p-5 rounded-2xl text-center">
+            <Trash2 className="w-8 h-8 text-loss mx-auto mb-3" />
+            <h3 className="text-base font-bold text-foreground mb-1">Delete All Trades?</h3>
+            <p className="text-xs text-muted-foreground mb-4">This will remove the entire holding and all its trades. This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteHoldingId(null)}
+                className="flex-1 py-2.5 rounded-xl bg-secondary text-sm font-semibold text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { removeHolding(deleteHoldingId); setDeleteHoldingId(null); }}
+                className="flex-1 py-2.5 rounded-xl bg-loss text-sm font-semibold text-primary-foreground"
+              >
+                Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </PullToRefresh>
   );

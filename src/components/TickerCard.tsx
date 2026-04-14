@@ -16,6 +16,10 @@ interface TickerCardProps {
   isPinned?: boolean;
   onTogglePin?: () => void;
   canPin?: boolean;
+  dayHigh?: number;
+  dayLow?: number;
+  high52w?: number;
+  low52w?: number;
 }
 
 export function TickerCard({
@@ -31,9 +35,13 @@ export function TickerCard({
   isPinned,
   onTogglePin,
   canPin,
+  dayHigh,
+  dayLow,
+  high52w,
+  low52w,
 }: TickerCardProps) {
   const isPositive = changePercent >= 0;
-  const confidence = computeConfidence({ changePercent });
+  const confidence = computeConfidence({ changePercent, dayHigh, dayLow, high52w, low52w, price });
 
   return (
     <div

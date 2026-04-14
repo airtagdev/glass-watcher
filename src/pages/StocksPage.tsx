@@ -86,6 +86,10 @@ export default function StocksPage() {
               price={s.regularMarketPrice}
               changePercent={s.regularMarketChangePercent}
               change={s.regularMarketChange}
+              dayHigh={s.regularMarketDayHigh}
+              dayLow={s.regularMarketDayLow}
+              high52w={s.fiftyTwoWeekHigh}
+              low52w={s.fiftyTwoWeekLow}
               isWatched={isInWatchlist(`stock-${s.symbol}`)}
               onToggleWatch={() => handleToggle(s)}
               onClick={() => setSelectedStock(s)}
@@ -107,6 +111,7 @@ export default function StocksPage() {
           volume={detailStock.regularMarketVolume}
           dayHigh={detailStock.regularMarketDayHigh}
           dayLow={detailStock.regularMarketDayLow}
+          trailingPE={detailStock.trailingPE}
           isWatched={isInWatchlist(`stock-${detailStock.symbol}`)}
           onToggleWatch={() => handleToggle(detailStock)}
           onClose={() => { setSelectedStock(null); setSearchSelectedSymbol(null); }}

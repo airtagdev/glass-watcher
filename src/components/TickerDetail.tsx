@@ -18,6 +18,7 @@ interface TickerDetailProps {
   dayHigh?: number;
   dayLow?: number;
   imageUrl?: string;
+  trailingPE?: number;
   isWatched: boolean;
   onToggleWatch: () => void;
   onClose: () => void;
@@ -38,6 +39,7 @@ export function TickerDetail({
   dayHigh,
   dayLow,
   imageUrl,
+  trailingPE,
   isWatched,
   onToggleWatch,
   onClose,
@@ -163,6 +165,9 @@ export function TickerDetail({
           )}
           {volume != null && volume > 0 && (
             <StatItem label="Volume" value={formatVolume(volume)} />
+          )}
+          {trailingPE != null && trailingPE > 0 && (
+            <StatItem label="P/E Ratio" value={trailingPE.toFixed(2)} />
           )}
         </div>
 

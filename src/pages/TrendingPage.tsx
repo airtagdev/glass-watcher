@@ -4,8 +4,6 @@ import { usePopularStocks, StockQuote } from "@/hooks/useStockData";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { TickerDetail } from "@/components/TickerDetail";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { computeConfidence } from "@/lib/confidenceScore";
-import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 import { Flame, Plus, Check } from "lucide-react";
 import { PullToRefresh } from "@/components/PullToRefresh";
 
@@ -159,7 +157,6 @@ export default function TrendingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-foreground truncate">{item.symbol}</p>
                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
-                   <ConfidenceBadge confidence={computeConfidence({ changePercent: item.changePercent })} />
                  </div>
               </div>
 

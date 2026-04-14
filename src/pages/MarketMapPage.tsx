@@ -377,6 +377,7 @@ export default function MarketMapPage() {
           volume={selectedStock.regularMarketVolume}
           dayHigh={selectedStock.regularMarketDayHigh}
           dayLow={selectedStock.regularMarketDayLow}
+          trailingPE={selectedStock.trailingPE}
           isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
           onToggleWatch={() => handleStockToggle(selectedStock)}
           onClose={() => setSelectedStock(null)}

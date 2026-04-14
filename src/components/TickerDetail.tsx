@@ -18,7 +18,7 @@ interface TickerDetailProps {
   dayHigh?: number;
   dayLow?: number;
   imageUrl?: string;
-  trailingPE?: number;
+  trailingPE?: number | null;
   isWatched: boolean;
   onToggleWatch: () => void;
   onClose: () => void;

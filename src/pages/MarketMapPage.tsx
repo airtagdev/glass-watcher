@@ -57,7 +57,6 @@ function getSectorColor(change: number): string {
 }
 
 function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize: number; onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
   const sizeRatio = Math.max(0.3, sector.tickers.length / maxSize);
   const bgColor = getSectorColor(sector.change);
 
@@ -68,16 +67,12 @@ function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize
 
   return (
     <div
-      className="relative rounded-xl overflow-hidden transition-all duration-500 cursor-pointer"
+      className="relative rounded-xl overflow-hidden transition-all duration-300 cursor-pointer"
       style={{
         backgroundColor: bgColor,
         flex: `${sizeRatio} 1 0%`,
         minHeight: "120px",
-        opacity: hovered ? 1 : 0.9,
-        transform: hovered ? "scale(1.02)" : "scale(1)",
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onClick={onClick}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
@@ -89,16 +84,6 @@ function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize
           </span>
           <span className={`text-white/60 ${tickerCountSize} ml-1`}>{sector.tickers.length}</span>
         </div>
-        {hovered && (
-          <div className="mt-2 space-y-0.5 animate-fade-in">
-            {sector.tickers.slice(0, 5).map((t) => (
-              <div key={t.symbol} className="flex justify-between text-xs text-white/80">
-                <span className="font-medium">{t.symbol}</span>
-                <span>{t.change >= 0 ? "+" : ""}{t.change.toFixed(2)}%</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

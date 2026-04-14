@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { X } from "lucide-react";
+import { X, Map as MapIcon } from "lucide-react";
 import { usePopularStocks, StockQuote } from "@/hooks/useStockData";
 import { useTopCryptos, CryptoTicker } from "@/hooks/useCryptoData";
 import { useWatchlist } from "@/hooks/useWatchlist";
@@ -244,12 +244,13 @@ export default function MarketMapPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-12 px-4">
+    <div className="min-h-screen bg-background pb-24 px-4 pt-14">
       <div className="max-w-lg mx-auto">
-        <div className="mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <MapIcon className="w-5 h-5 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Market Map</h1>
-          <p className="text-sm text-muted-foreground">Live sector heat flow</p>
         </div>
+        <p className="text-sm text-muted-foreground mb-4">Live sector heat flow</p>
 
         {/* Flow indicators */}
         {flows.length > 0 && (

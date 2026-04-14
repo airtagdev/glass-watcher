@@ -105,21 +105,19 @@ function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize
 }
 
 function FlowArrow({ from, to, strength }: { from: string; to: string; strength: number }) {
-  const color = strength > 0 ? "text-gain" : "text-loss";
+  const opacity = Math.min(1, Math.abs(strength) / 4);
+  const color = strength > 0 ? "hsl(var(--chart-2))" : "hsl(var(--destructive))";
 
   return (
-    <div className="glass rounded-xl p-3 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 min-w-0">
-        <span className={`text-xs font-semibold ${color}`}>{from}</span>
-        <div className="flex flex-col items-center">
-          <span className={`text-sm ${color}`}>→</span>
-        </div>
-        <span className="text-xs font-semibold text-foreground">{to}</span>
-      </div>
-      <div className="text-right shrink-0">
-        <span className={`text-sm font-bold ${color}`}>{Math.abs(strength).toFixed(1)}%</span>
-        <p className="text-[9px] text-muted-foreground">spread</p>
-      </div>
+    <div className="flex items-center gap-1 px-2 py-1 rounded-lg glass text-xs">
+      <span className="text-muted-foreground font-medium">{from}</span>
+      <span style={{ color, opacity: opacity + 0.3 }} className="font-bold">
+        {strength > 0 ? "→" : "←"}
+      </span>
+      <span className="text-muted-foreground font-medium">{to}</span>
+      <span className="text-[10px] ml-1" style={{ color }}>
+        {Math.abs(strength).toFixed(1)}%
+      </span>
     </div>
   );
 }
@@ -256,13 +254,11 @@ export default function MarketMapPage() {
 
         {/* Flow indicators */}
         {flows.length > 0 && (
-          <div className="mb-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Sector Rotation <span className="text-muted-foreground/60">· based on performance spread</span></p>
-            <div className="grid grid-cols-1 gap-2">
-              {flows.map((f, i) => (
-                <FlowArrow key={i} from={f.from} to={f.to} strength={f.strength} />
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="text-xs text-muted-foreground font-medium self-center">Flow:</span>
+            {flows.map((f, i) => (
+              <FlowArrow key={i} from={f.from} to={f.to} strength={f.strength} />
+            ))}
           </div>
         )}
 

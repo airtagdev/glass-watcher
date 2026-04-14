@@ -1,4 +1,4 @@
-import { Home, TrendingUp, Bitcoin, Briefcase, MoreHorizontal, Newspaper, Flame, Map } from "lucide-react";
+import { Home, TrendingUp, Bitcoin, Briefcase, MoreHorizontal, Newspaper, Flame, Map, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
@@ -13,6 +13,7 @@ const moreTabs = [
   { path: "/news", icon: Newspaper, label: "News" },
   { path: "/trending", icon: Flame, label: "Trending" },
   { path: "/market-map", icon: Map, label: "Market Map" },
+  { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export function BottomNav() {

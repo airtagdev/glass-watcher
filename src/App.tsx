@@ -15,6 +15,7 @@ import NewsPage from "./pages/NewsPage";
 import TrendingPage from "./pages/TrendingPage";
 import NotFound from "./pages/NotFound";
 import MarketMapPage from "./pages/MarketMapPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/news" element={<NewsPage />} />
               <Route path="/trending" element={<TrendingPage />} />
               <Route path="/market-map" element={<MarketMapPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <BottomNav />

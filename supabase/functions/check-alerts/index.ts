@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
-const YAHOO_API = "https://query1.finance.yahoo.com/v7/finance/quote";
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,18 +59,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch stock prices
+    // Fetch stock prices via our own stock-proxy
     if (stockAlerts.length > 0) {
       const symbols = [...new Set(stockAlerts.map((a: any) => a.ticker_symbol.toUpperCase()))];
       try {
-        const url = `${YAHOO_API}?symbols=${symbols.join(",")}`;
-        const res = await fetch(url);
+        const url = `${supabaseUrl}/functions/v1/stock-proxy?action=quotes&symbols=${symbols.join(",")}`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${serviceRoleKey}` },
+        });
         if (res.ok) {
-          const data = await res.json();
-          const quotes = data.quoteResponse?.result || [];
-          for (const q of quotes) {
-            prices[`stock:${q.symbol}`] = q.regularMarketPrice;
-            prices[`stock:${q.symbol}:change`] = q.regularMarketChangePercent || 0;
+          const quotes = await res.json();
+          for (const q of (Array.isArray(quotes) ? quotes : [])) {
+            const sym = q.symbol?.toUpperCase();
+            if (!sym) continue;
+            prices[`stock:${sym}`] = q.regularMarketPrice;
+            prices[`stock:${sym}:change`] = q.regularMarketChangePercent || 0;
           }
         }
       } catch (e) {
@@ -83,7 +86,10 @@ Deno.serve(async (req) => {
     const notifications: { deviceId: string; title: string; body: string }[] = [];
 
     for (const alert of alerts) {
-      const key = `${alert.ticker_type}:${alert.ticker_symbol.toLowerCase()}`;
+      const sym = alert.ticker_type === "stock"
+        ? alert.ticker_symbol.toUpperCase()
+        : alert.ticker_symbol.toLowerCase();
+      const key = `${alert.ticker_type}:${sym}`;
       const currentPrice = prices[key];
       const currentChange = prices[`${key}:change`] || 0;
 

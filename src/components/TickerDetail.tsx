@@ -4,7 +4,6 @@ import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "
 import { Input } from "@/components/ui/input";
 import { computeConfidence } from "@/lib/confidenceScore";
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
-import { Input } from "@/components/ui/input";
 
 interface TickerDetailProps {
   symbol: string;

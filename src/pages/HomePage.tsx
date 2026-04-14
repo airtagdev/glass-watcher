@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useWatchlist, WatchlistItem } from "@/hooks/useWatchlist";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptosByIds } from "@/hooks/useCryptoData";
@@ -9,6 +9,28 @@ import { CryptoTicker } from "@/hooks/useCryptoData";
 import { Home, Eye, Bell, Briefcase, TrendingUp, TrendingDown } from "lucide-react";
 import { ManageAlerts } from "@/components/ManageAlerts";
 import { formatCurrency, formatPercent } from "@/lib/format";
+
+function useMarketStatus() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const day = et.getDay();
+      const hours = et.getHours();
+      const minutes = et.getMinutes();
+      const time = hours * 60 + minutes;
+      // Mon-Fri, 9:30 AM - 4:00 PM ET
+      setIsOpen(day >= 1 && day <= 5 && time >= 570 && time < 960);
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return isOpen;
+}
 import { useNavigate } from "react-router-dom";
 
 type WatchlistEntry = {
@@ -18,6 +40,7 @@ type WatchlistEntry = {
 };
 
 export default function HomePage() {
+  const marketOpen = useMarketStatus();
   const navigate = useNavigate();
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist, togglePin, isPinned, pinnedIds, pinCount, maxPins } = useWatchlist();
   const [showAlerts, setShowAlerts] = useState(false);
@@ -72,6 +95,14 @@ export default function HomePage() {
   return (
     <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
+      {/* Market Status */}
+      <div className="flex items-center gap-1.5 mb-3">
+        <span className={`w-2 h-2 rounded-full ${marketOpen ? "bg-gain" : "bg-loss"}`} />
+        <span className={`text-xs font-semibold ${marketOpen ? "text-gain" : "text-loss"}`}>
+          Market {marketOpen ? "Open" : "Closed"}
+        </span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

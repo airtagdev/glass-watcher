@@ -1,11 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
-import { usePopularStocks } from "@/hooks/useStockData";
-import { useTopCryptos } from "@/hooks/useCryptoData";
+import { X } from "lucide-react";
+import { usePopularStocks, StockQuote } from "@/hooks/useStockData";
+import { useTopCryptos, CryptoTicker } from "@/hooks/useCryptoData";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import { TickerCard } from "@/components/TickerCard";
+import { TickerDetail } from "@/components/TickerDetail";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
 interface SectorData {
   name: string;
   change: number;
-  tickers: { symbol: string; name: string; change: number }[];
+  tickers: { symbol: string; name: string; change: number; changePercent: number; price: number; imageUrl?: string }[];
 }
 
 const SECTOR_MAP: Record<string, string> = {
@@ -51,7 +56,7 @@ function getSectorColor(change: number): string {
   return "hsl(0, 76%, 36%)";
 }
 
-function SectorBlock({ sector, maxSize }: { sector: SectorData; maxSize: number }) {
+function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize: number; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
   const sizeRatio = Math.max(0.3, sector.tickers.length / maxSize);
   const bgColor = getSectorColor(sector.change);
@@ -68,6 +73,7 @@ function SectorBlock({ sector, maxSize }: { sector: SectorData; maxSize: number 
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
       <div className="relative p-3 h-full flex flex-col justify-between">
@@ -76,6 +82,7 @@ function SectorBlock({ sector, maxSize }: { sector: SectorData; maxSize: number 
           <span className="text-white/90 text-sm font-semibold drop-shadow">
             {sector.change >= 0 ? "+" : ""}{sector.change.toFixed(2)}%
           </span>
+          <span className="text-white/60 text-xs ml-2">{sector.tickers.length} tickers</span>
         </div>
         {hovered && (
           <div className="mt-2 space-y-0.5 animate-fade-in">
@@ -113,12 +120,29 @@ function FlowArrow({ from, to, strength }: { from: string; to: string; strength:
 export default function MarketMapPage() {
   const { data: stocks } = usePopularStocks();
   const { data: cryptos } = useTopCryptos();
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const [pulse, setPulse] = useState(0);
+  const [selectedSector, setSelectedSector] = useState<SectorData | null>(null);
+  const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
+  const [selectedCrypto, setSelectedCrypto] = useState<CryptoTicker | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setPulse((p) => p + 1), 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Build a lookup of full stock data by symbol
+  const stockLookup = useMemo(() => {
+    const map: Record<string, StockQuote> = {};
+    stocks?.forEach((s) => { map[s.symbol] = s; });
+    return map;
+  }, [stocks]);
+
+  const cryptoLookup = useMemo(() => {
+    const map: Record<string, CryptoTicker> = {};
+    cryptos?.forEach((c) => { map[c.symbol.toUpperCase()] = c; });
+    return map;
+  }, [cryptos]);
 
   const sectors = useMemo(() => {
     if (!stocks) return [];
@@ -130,13 +154,15 @@ export default function MarketMapPage() {
       map[sectorName].tickers.push({
         symbol: s.symbol,
         name: s.shortName,
-        change: s.regularMarketChangePercent,
+        change: s.regularMarketChange,
+        changePercent: s.regularMarketChangePercent,
+        price: s.regularMarketPrice,
       });
     });
 
     Object.values(map).forEach((sector) => {
       sector.change =
-        sector.tickers.reduce((sum, t) => sum + t.change, 0) / sector.tickers.length;
+        sector.tickers.reduce((sum, t) => sum + t.changePercent, 0) / sector.tickers.length;
     });
 
     return Object.values(map).sort((a, b) => b.tickers.length - a.tickers.length);
@@ -147,11 +173,14 @@ export default function MarketMapPage() {
     const tickers = cryptos.slice(0, 10).map((c) => ({
       symbol: c.symbol.toUpperCase(),
       name: c.name,
-      change: c.price_change_percentage_24h || 0,
+      change: c.price_change_24h || 0,
+      changePercent: c.price_change_percentage_24h || 0,
+      price: c.current_price,
+      imageUrl: c.image,
     }));
     return {
       name: "Crypto",
-      change: tickers.reduce((s, t) => s + t.change, 0) / tickers.length,
+      change: tickers.reduce((s, t) => s + t.changePercent, 0) / tickers.length,
       tickers,
     };
   }, [cryptos]);
@@ -187,6 +216,28 @@ export default function MarketMapPage() {
 
   const maxSize = Math.max(...allSectors.map((s) => s.tickers.length), 1);
 
+  const handleTickerClick = (ticker: SectorData["tickers"][0], sectorName: string) => {
+    if (sectorName === "Crypto") {
+      const crypto = cryptoLookup[ticker.symbol];
+      if (crypto) setSelectedCrypto(crypto);
+    } else {
+      const stock = stockLookup[ticker.symbol];
+      if (stock) setSelectedStock(stock);
+    }
+  };
+
+  const handleStockToggle = (s: StockQuote) => {
+    const id = `stock-${s.symbol}`;
+    if (isInWatchlist(id)) removeFromWatchlist(id);
+    else addToWatchlist({ id, symbol: s.symbol, name: s.shortName, type: "stock" });
+  };
+
+  const handleCryptoToggle = (c: CryptoTicker) => {
+    const id = `crypto-${c.id}`;
+    if (isInWatchlist(id)) removeFromWatchlist(id);
+    else addToWatchlist({ id, symbol: c.symbol.toUpperCase(), name: c.name, type: "crypto", coinId: c.id, image: c.image });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24 pt-4 px-4">
       <div className="max-w-lg mx-auto">
@@ -214,31 +265,27 @@ export default function MarketMapPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Top row — largest sectors */}
             <div className="flex gap-3" style={{ minHeight: "140px" }}>
               {allSectors.slice(0, 2).map((s) => (
-                <SectorBlock key={s.name} sector={s} maxSize={maxSize} />
+                <SectorBlock key={s.name} sector={s} maxSize={maxSize} onClick={() => setSelectedSector(s)} />
               ))}
             </div>
-            {/* Middle row */}
             {allSectors.length > 2 && (
               <div className="flex gap-3" style={{ minHeight: "120px" }}>
                 {allSectors.slice(2, 5).map((s) => (
-                  <SectorBlock key={s.name} sector={s} maxSize={maxSize} />
+                  <SectorBlock key={s.name} sector={s} maxSize={maxSize} onClick={() => setSelectedSector(s)} />
                 ))}
               </div>
             )}
-            {/* Bottom row */}
             {allSectors.length > 5 && (
               <div className="flex gap-3" style={{ minHeight: "100px" }}>
                 {allSectors.slice(5).map((s) => (
-                  <SectorBlock key={s.name} sector={s} maxSize={maxSize} />
+                  <SectorBlock key={s.name} sector={s} maxSize={maxSize} onClick={() => setSelectedSector(s)} />
                 ))}
               </div>
             )}
           </div>
         )}
-
       </div>
 
       {/* Legend pinned above bottom nav */}
@@ -255,6 +302,96 @@ export default function MarketMapPage() {
           </div>
         </div>
       </div>
+
+      {/* Sector Modal */}
+      {selectedSector && !selectedStock && !selectedCrypto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm" onClick={() => setSelectedSector(null)}>
+          <div
+            className="w-full max-w-lg mx-4 glass-card rounded-3xl p-6 animate-fade-in max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">{selectedSector.name}</h2>
+                <p className={`text-sm font-semibold ${selectedSector.change >= 0 ? "text-gain" : "text-loss"}`}>
+                  {selectedSector.change >= 0 ? "+" : ""}{selectedSector.change.toFixed(2)}% avg
+                </p>
+              </div>
+              <button onClick={() => setSelectedSector(null)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <X className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {selectedSector.tickers.map((t) => {
+                const watchId = selectedSector.name === "Crypto"
+                  ? `crypto-${cryptoLookup[t.symbol]?.id || t.symbol.toLowerCase()}`
+                  : `stock-${t.symbol}`;
+                return (
+                  <TickerCard
+                    key={t.symbol}
+                    symbol={t.symbol}
+                    name={t.name}
+                    price={t.price}
+                    changePercent={t.changePercent}
+                    change={t.change}
+                    imageUrl={t.imageUrl}
+                    isWatched={isInWatchlist(watchId)}
+                    onToggleWatch={() => {
+                      if (selectedSector.name === "Crypto") {
+                        const crypto = cryptoLookup[t.symbol];
+                        if (crypto) handleCryptoToggle(crypto);
+                      } else {
+                        const stock = stockLookup[t.symbol];
+                        if (stock) handleStockToggle(stock);
+                      }
+                    }}
+                    onClick={() => handleTickerClick(t, selectedSector.name)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Detail */}
+      {selectedStock && (
+        <TickerDetail
+          symbol={selectedStock.symbol}
+          name={selectedStock.shortName}
+          price={selectedStock.regularMarketPrice}
+          change={selectedStock.regularMarketChange}
+          changePercent={selectedStock.regularMarketChangePercent}
+          high52w={selectedStock.fiftyTwoWeekHigh}
+          low52w={selectedStock.fiftyTwoWeekLow}
+          marketCap={selectedStock.marketCap}
+          volume={selectedStock.regularMarketVolume}
+          dayHigh={selectedStock.regularMarketDayHigh}
+          dayLow={selectedStock.regularMarketDayLow}
+          isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
+          onToggleWatch={() => handleStockToggle(selectedStock)}
+          onClose={() => setSelectedStock(null)}
+        />
+      )}
+
+      {/* Crypto Detail */}
+      {selectedCrypto && (
+        <TickerDetail
+          symbol={selectedCrypto.symbol.toUpperCase()}
+          name={selectedCrypto.name}
+          price={selectedCrypto.current_price}
+          change={selectedCrypto.price_change_24h || 0}
+          changePercent={selectedCrypto.price_change_percentage_24h || 0}
+          high52w={selectedCrypto.ath}
+          low52w={selectedCrypto.atl}
+          marketCap={selectedCrypto.market_cap}
+          volume={selectedCrypto.total_volume}
+          imageUrl={selectedCrypto.image}
+          isWatched={isInWatchlist(`crypto-${selectedCrypto.id}`)}
+          onToggleWatch={() => handleCryptoToggle(selectedCrypto)}
+          onClose={() => setSelectedCrypto(null)}
+        />
+      )}
     </div>
   );
 }

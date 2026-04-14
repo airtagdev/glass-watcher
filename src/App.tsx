@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { AppLoader } from "@/components/AppLoader";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { DisclaimerModal } from "@/components/DisclaimerModal";
 import Index from "./pages/Index";
 import StocksPage from "./pages/StocksPage";
 import CryptoPage from "./pages/CryptoPage";
@@ -21,6 +22,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <DisclaimerModal />
       <BrowserRouter>
         <ScrollToTop />
         <AppLoader>

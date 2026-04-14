@@ -34,7 +34,7 @@ export function BottomNav() {
 
       {/* More menu */}
       {moreOpen && (
-        <div className="fixed bottom-[4.5rem] left-1/2 -translate-x-1/2 z-50 glass border border-glass-border/30 rounded-2xl p-2 min-w-[200px] animate-fade-in">
+        <div className="fixed bottom-[4.5rem] right-4 z-50 glass border border-glass-border/30 rounded-2xl p-2 min-w-[200px] animate-fade-in">
           {moreTabs.map((tab) => {
             const active = location.pathname === tab.path;
             return (

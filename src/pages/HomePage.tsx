@@ -159,6 +159,10 @@ export default function HomePage() {
                   price={stock.regularMarketPrice}
                   changePercent={stock.regularMarketChangePercent}
                   change={stock.regularMarketChange}
+                  dayHigh={stock.regularMarketDayHigh}
+                  dayLow={stock.regularMarketDayLow}
+                  high52w={stock.fiftyTwoWeekHigh}
+                  low52w={stock.fiftyTwoWeekLow}
                   isWatched={true}
                   onToggleWatch={() => handleToggleStock(stock)}
                   onClick={() => setSelectedStock(stock)}

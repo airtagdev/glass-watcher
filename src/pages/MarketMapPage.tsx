@@ -61,6 +61,11 @@ function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize
   const sizeRatio = Math.max(0.3, sector.tickers.length / maxSize);
   const bgColor = getSectorColor(sector.change);
 
+  // Scale font based on sector size
+  const titleSize = sizeRatio > 0.7 ? "text-lg" : sizeRatio > 0.5 ? "text-base" : "text-sm";
+  const subSize = sizeRatio > 0.7 ? "text-sm" : "text-[11px]";
+  const tickerCountSize = sizeRatio > 0.5 ? "text-xs" : "text-[10px]";
+
   return (
     <div
       className="relative rounded-xl overflow-hidden transition-all duration-500 cursor-pointer"
@@ -78,11 +83,11 @@ function SectorBlock({ sector, maxSize, onClick }: { sector: SectorData; maxSize
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
       <div className="relative p-3 h-full flex flex-col justify-between">
         <div>
-          <h3 className="text-white font-bold text-lg drop-shadow-md">{sector.name}</h3>
-          <span className="text-white/90 text-sm font-semibold drop-shadow">
+          <h3 className={`text-white font-bold ${titleSize} drop-shadow-md truncate`}>{sector.name}</h3>
+          <span className={`text-white/90 ${subSize} font-semibold drop-shadow`}>
             {sector.change >= 0 ? "+" : ""}{sector.change.toFixed(2)}%
           </span>
-          <span className="text-white/60 text-xs ml-2">{sector.tickers.length} tickers</span>
+          <span className={`text-white/60 ${tickerCountSize} ml-1`}>{sector.tickers.length}</span>
         </div>
         {hovered && (
           <div className="mt-2 space-y-0.5 animate-fade-in">
@@ -335,6 +340,10 @@ export default function MarketMapPage() {
                     changePercent={t.changePercent}
                     change={t.change}
                     imageUrl={t.imageUrl}
+                    dayHigh={selectedSector.name === "Crypto" ? undefined : stockLookup[t.symbol]?.regularMarketDayHigh}
+                    dayLow={selectedSector.name === "Crypto" ? undefined : stockLookup[t.symbol]?.regularMarketDayLow}
+                    high52w={selectedSector.name === "Crypto" ? undefined : stockLookup[t.symbol]?.fiftyTwoWeekHigh}
+                    low52w={selectedSector.name === "Crypto" ? undefined : stockLookup[t.symbol]?.fiftyTwoWeekLow}
                     isWatched={isInWatchlist(watchId)}
                     onToggleWatch={() => {
                       if (selectedSector.name === "Crypto") {

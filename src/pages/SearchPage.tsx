@@ -161,6 +161,7 @@ export default function SearchPage() {
           dayHigh={stockDetail.regularMarketDayHigh}
           dayLow={stockDetail.regularMarketDayLow}
           trailingPE={stockDetail.trailingPE}
+          tickerType="stock"
           isWatched={isInWatchlist(`stock-${stockDetail.symbol}`)}
           onToggleWatch={() => handleToggleStock(stockDetail.symbol, stockDetail.shortName)}
           onClose={() => setSelectedStock(null)}
@@ -181,6 +182,7 @@ export default function SearchPage() {
           dayHigh={cryptoDetail.high_24h}
           dayLow={cryptoDetail.low_24h}
           imageUrl={cryptoDetail.image}
+          tickerType="crypto"
           isWatched={isInWatchlist(cryptoDetail.id)}
           onToggleWatch={() => handleToggleCrypto(cryptoDetail.id, cryptoDetail.symbol, cryptoDetail.name)}
           onClose={() => setSelectedCryptoId(null)}

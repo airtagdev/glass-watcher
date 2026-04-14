@@ -193,6 +193,7 @@ export default function TrendingPage() {
           <TickerDetail
             {...detail}
             imageUrl={detail.imageUrl}
+            tickerType={selectedItem.type}
             isWatched={isInWatchlist(selectedItem.id)}
             onToggleWatch={() => handleToggle(selectedItem)}
             onClose={() => setSelectedItem(null)}

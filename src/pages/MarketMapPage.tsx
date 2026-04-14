@@ -364,6 +364,7 @@ export default function MarketMapPage() {
           dayHigh={selectedStock.regularMarketDayHigh}
           dayLow={selectedStock.regularMarketDayLow}
           trailingPE={selectedStock.trailingPE}
+          tickerType="stock"
           isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
           onToggleWatch={() => handleStockToggle(selectedStock)}
           onClose={() => setSelectedStock(null)}
@@ -383,6 +384,7 @@ export default function MarketMapPage() {
           marketCap={selectedCrypto.market_cap}
           volume={selectedCrypto.total_volume}
           imageUrl={selectedCrypto.image}
+          tickerType="crypto"
           isWatched={isInWatchlist(`crypto-${selectedCrypto.id}`)}
           onToggleWatch={() => handleCryptoToggle(selectedCrypto)}
           onClose={() => setSelectedCrypto(null)}

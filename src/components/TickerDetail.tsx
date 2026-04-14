@@ -4,6 +4,7 @@ import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "
 import { Input } from "@/components/ui/input";
 import { computeConfidence } from "@/lib/confidenceScore";
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
+import { useStockDetail } from "@/hooks/useStockData";
 
 interface TickerDetailProps {
   symbol: string;
@@ -19,6 +20,7 @@ interface TickerDetailProps {
   dayLow?: number;
   imageUrl?: string;
   trailingPE?: number | null;
+  tickerType?: "stock" | "crypto";
   isWatched: boolean;
   onToggleWatch: () => void;
   onClose: () => void;
@@ -40,12 +42,16 @@ export function TickerDetail({
   dayLow,
   imageUrl,
   trailingPE,
+  tickerType,
   isWatched,
   onToggleWatch,
   onClose,
 }: TickerDetailProps) {
   const isPositive = (changePercent ?? 0) >= 0;
   const confidence = computeConfidence({ changePercent, dayHigh, dayLow, high52w, low52w, price });
+  const shouldFetchStockDetail = tickerType === "stock" && (trailingPE == null || trailingPE <= 0);
+  const { data: stockDetailData } = useStockDetail(shouldFetchStockDetail ? symbol : "");
+  const resolvedTrailingPE = tickerType === "stock" ? trailingPE ?? stockDetailData?.trailingPE ?? null : null;
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -166,8 +172,8 @@ export function TickerDetail({
           {volume != null && volume > 0 && (
             <StatItem label="Volume" value={formatVolume(volume)} />
           )}
-          {trailingPE != null && trailingPE > 0 && (
-            <StatItem label="P/E Ratio" value={trailingPE.toFixed(2)} />
+          {resolvedTrailingPE != null && resolvedTrailingPE > 0 && (
+            <StatItem label="P/E Ratio" value={resolvedTrailingPE.toFixed(2)} />
           )}
         </div>
 

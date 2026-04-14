@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePopularStocks } from "@/hooks/useStockData";
-import { useCryptoData } from "@/hooks/useCryptoData";
+import { useTopCryptos } from "@/hooks/useCryptoData";
 
 interface SectorData {
   name: string;
@@ -98,7 +98,7 @@ function FlowArrow({ from, to, strength }: { from: string; to: string; strength:
 
 export default function MarketMapPage() {
   const { data: stocks } = usePopularStocks();
-  const { data: cryptos } = useCryptoData();
+  const { data: cryptos } = useTopCryptos();
   const [pulse, setPulse] = useState(0);
 
   useEffect(() => {

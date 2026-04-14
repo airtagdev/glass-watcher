@@ -66,6 +66,13 @@ const POPULAR_STOCKS = [
   "CSCO", "VZ", "ADBE", "CRM", "CMCSA", "PFE", "KO", "PEP", "TMO", "ABBV",
   "AVGO", "COST", "MRK", "CVX", "XOM", "LLY", "ABT", "MCD", "ACN", "DHR",
   "NKE", "TXN", "QCOM", "NEE", "LIN", "LOW", "MDT", "UPS", "MS", "GS",
+  "COP", "SLB", "EOG", "OXY", "MPC", "PSX", "VLO",
+  "CAT", "DE", "HON", "GE", "RTX", "BA", "LMT", "MMM", "FDX",
+  "T", "TMUS", "CHTR",
+  "AMGN", "GILD", "BMY", "ISRG", "REGN", "VRTX",
+  "AMD", "MU", "ANET", "NOW", "PANW", "SNPS", "CDNS",
+  "AXP", "BLK", "SCHW", "C", "WFC", "USB",
+  "TGT", "SBUX", "LULU", "BKNG", "ABNB", "UBER",
 ];
 
 export function usePopularStocks() {

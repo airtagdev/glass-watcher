@@ -89,7 +89,7 @@ serve(async (req) => {
         console.error("Failed to fetch P/E ratios:", e);
       }
 
-      return new Response(JSON.stringify(results.filter(Boolean)), {
+      return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -95,19 +95,17 @@ export default function HomePage() {
   return (
     <PullToRefresh>
     <div className="px-4 pt-14 pb-24">
-      {/* Market Status */}
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className={`w-2 h-2 rounded-full ${marketOpen ? "bg-gain" : "bg-loss"}`} />
-        <span className={`text-xs font-semibold ${marketOpen ? "text-gain" : "text-loss"}`}>
-          Market {marketOpen ? "Open" : "Closed"}
-        </span>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Home className="w-5 h-5 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Home</h1>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${marketOpen ? "bg-gain" : "bg-loss"}`} />
+          <span className={`text-xs font-semibold ${marketOpen ? "text-gain" : "text-loss"}`}>
+            Market {marketOpen ? "Open" : "Closed"}
+          </span>
         </div>
         <button
           onClick={() => setShowAlerts(true)}

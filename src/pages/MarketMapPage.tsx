@@ -239,7 +239,7 @@ export default function MarketMapPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-4 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-12 px-4">
       <div className="max-w-lg mx-auto">
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-foreground">Market Map</h1>

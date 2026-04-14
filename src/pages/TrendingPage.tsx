@@ -157,7 +157,6 @@ export default function TrendingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-foreground truncate">{item.symbol}</p>
                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
-                   <ConfidenceBadge confidence={computeConfidence({ changePercent: item.changePercent })} />
                  </div>
               </div>
 

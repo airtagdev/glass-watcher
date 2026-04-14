@@ -40,6 +40,7 @@ type WatchlistEntry = {
 };
 
 export default function HomePage() {
+  const marketOpen = useMarketStatus();
   const navigate = useNavigate();
   const { watchlist, removeFromWatchlist, isInWatchlist, addToWatchlist, togglePin, isPinned, pinnedIds, pinCount, maxPins } = useWatchlist();
   const [showAlerts, setShowAlerts] = useState(false);

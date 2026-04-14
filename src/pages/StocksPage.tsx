@@ -112,6 +112,7 @@ export default function StocksPage() {
           dayHigh={detailStock.regularMarketDayHigh}
           dayLow={detailStock.regularMarketDayLow}
           trailingPE={detailStock.trailingPE}
+          tickerType="stock"
           isWatched={isInWatchlist(`stock-${detailStock.symbol}`)}
           onToggleWatch={() => handleToggle(detailStock)}
           onClose={() => { setSelectedStock(null); setSearchSelectedSymbol(null); }}

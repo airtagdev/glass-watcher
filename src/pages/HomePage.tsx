@@ -220,6 +220,7 @@ export default function HomePage() {
           dayHigh={selectedStock.regularMarketDayHigh}
           dayLow={selectedStock.regularMarketDayLow}
           trailingPE={selectedStock.trailingPE}
+          tickerType="stock"
           isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
           onToggleWatch={() => handleToggleStock(selectedStock)}
           onClose={() => setSelectedStock(null)}
@@ -240,6 +241,7 @@ export default function HomePage() {
           dayHigh={selectedCrypto.high_24h}
           dayLow={selectedCrypto.low_24h}
           imageUrl={selectedCrypto.image}
+          tickerType="crypto"
           isWatched={isInWatchlist(selectedCrypto.id)}
           onToggleWatch={() => handleToggleCrypto(selectedCrypto)}
           onClose={() => setSelectedCrypto(null)}

@@ -5,6 +5,76 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const YAHOO_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+};
+
+async function fetchTrailingPE(symbol: string): Promise<number | null> {
+  const period2 = Math.floor(Date.now() / 1000);
+  const period1 = period2 - 60 * 60 * 24 * 365 * 2;
+  const fundamentalsUrl = `https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(symbol)}?symbol=${encodeURIComponent(symbol)}&type=trailingPeRatio&period1=${period1}&period2=${period2}`;
+
+  try {
+    const res = await fetch(fundamentalsUrl, { headers: YAHOO_HEADERS });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const series = data?.timeseries?.result?.[0]?.trailingPeRatio;
+
+    if (!Array.isArray(series)) return null;
+
+    const latestValue = [...series]
+      .reverse()
+      .find((entry) => typeof entry?.reportedValue?.raw === "number" && Number.isFinite(entry.reportedValue.raw));
+
+    return latestValue?.reportedValue?.raw ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchStockQuote(symbol: string) {
+  try {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+    const [quoteRes, trailingPE] = await Promise.all([
+      fetch(yahooUrl, { headers: YAHOO_HEADERS }),
+      fetchTrailingPE(symbol),
+    ]);
+
+    if (!quoteRes.ok) {
+      console.error(`Yahoo API error for ${symbol}: ${quoteRes.status} ${await quoteRes.text()}`);
+      return null;
+    }
+
+    const data = await quoteRes.json();
+    const result = data.chart?.result?.[0];
+    if (!result) return null;
+
+    const meta = result.meta;
+    const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+    const price = meta.regularMarketPrice || 0;
+    const change = price - prevClose;
+    const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+
+    return {
+      symbol: meta.symbol || symbol,
+      shortName: meta.shortName || meta.longName || symbol,
+      regularMarketPrice: price,
+      regularMarketChange: change,
+      regularMarketChangePercent: changePercent,
+      regularMarketVolume: meta.regularMarketVolume || 0,
+      marketCap: 0,
+      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
+      fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
+      regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
+      regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
+      trailingPE,
+    };
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,77 +87,12 @@ serve(async (req) => {
     if (action === "quotes") {
       const symbols = url.searchParams.get("symbols") || "";
       const symbolList = symbols.split(",").filter(Boolean);
-      
+
       if (symbolList.length === 0) {
         return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Fetch chart data for all symbols in parallel
-      const chartResults = await Promise.all(
-        symbolList.map(async (symbol) => {
-          try {
-            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
-            const res = await fetch(yahooUrl, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              },
-            });
-            if (!res.ok) {
-              console.error(`Yahoo API error for ${symbol}: ${res.status} ${await res.text()}`);
-              return null;
-            }
-            const data = await res.json();
-            const result = data.chart?.result?.[0];
-            if (!result) return null;
-            const meta = result.meta;
-            const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
-            const price = meta.regularMarketPrice || 0;
-            const change = price - prevClose;
-            const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-            return {
-              symbol: meta.symbol || symbol,
-              shortName: meta.shortName || meta.longName || symbol,
-              regularMarketPrice: price,
-              regularMarketChange: change,
-              regularMarketChangePercent: changePercent,
-              regularMarketVolume: meta.regularMarketVolume || 0,
-              marketCap: 0,
-              fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
-              fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
-              regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
-              regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
-              trailingPE: null as number | null,
-            };
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      // Try to fetch P/E ratios via the quote summary endpoint
-      const results = chartResults.filter(Boolean) as any[];
-      try {
-        const peSymbols = results.map((r: any) => r.symbol).join(",");
-        const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(peSymbols)}&fields=trailingPE`;
-        const quoteRes = await fetch(quoteUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          },
-        });
-        if (quoteRes.ok) {
-          const quoteData = await quoteRes.json();
-          const quotes = quoteData.quoteResponse?.result || [];
-          const peMap: Record<string, number> = {};
-          for (const q of quotes) {
-            if (q.trailingPE) peMap[q.symbol] = q.trailingPE;
-          }
-          for (const r of results) {
-            if (peMap[r.symbol]) r.trailingPE = peMap[r.symbol];
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch P/E ratios:", e);
-      }
+      const results = (await Promise.all(symbolList.map(fetchStockQuote))).filter(Boolean);
 
       return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -101,9 +106,7 @@ serve(async (req) => {
       }
       const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
       const res = await fetch(yahooUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        },
+        headers: YAHOO_HEADERS,
       });
       const data = await res.json();
       const quotes = (data.quotes || [])

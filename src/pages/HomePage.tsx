@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useWatchlist, WatchlistItem } from "@/hooks/useWatchlist";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptosByIds } from "@/hooks/useCryptoData";
@@ -9,6 +9,28 @@ import { CryptoTicker } from "@/hooks/useCryptoData";
 import { Home, Eye, Bell, Briefcase, TrendingUp, TrendingDown } from "lucide-react";
 import { ManageAlerts } from "@/components/ManageAlerts";
 import { formatCurrency, formatPercent } from "@/lib/format";
+
+function useMarketStatus() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const day = et.getDay();
+      const hours = et.getHours();
+      const minutes = et.getMinutes();
+      const time = hours * 60 + minutes;
+      // Mon-Fri, 9:30 AM - 4:00 PM ET
+      setIsOpen(day >= 1 && day <= 5 && time >= 570 && time < 960);
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  return isOpen;
+}
 import { useNavigate } from "react-router-dom";
 
 type WatchlistEntry = {

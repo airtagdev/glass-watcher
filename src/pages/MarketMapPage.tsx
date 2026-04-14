@@ -9,21 +9,35 @@ interface SectorData {
 }
 
 const SECTOR_MAP: Record<string, string> = {
+  // Tech
   AAPL: "Tech", MSFT: "Tech", GOOGL: "Tech", META: "Tech", NVDA: "Tech",
+  INTC: "Tech", CSCO: "Tech", ADBE: "Tech", CRM: "Tech", AVGO: "Tech",
+  TXN: "Tech", QCOM: "Tech", ACN: "Tech", AMD: "Tech", MU: "Tech",
+  ANET: "Tech", NOW: "Tech", PANW: "Tech", SNPS: "Tech", CDNS: "Tech",
+  // Consumer
   AMZN: "Consumer", NFLX: "Consumer", TSLA: "Consumer", COST: "Consumer",
   NKE: "Consumer", MCD: "Consumer", HD: "Consumer", LOW: "Consumer",
-  WMT: "Consumer", DIS: "Consumer", PYPL: "Consumer",
+  WMT: "Consumer", DIS: "Consumer", PG: "Consumer", KO: "Consumer",
+  PEP: "Consumer", TGT: "Consumer", SBUX: "Consumer", LULU: "Consumer",
+  BKNG: "Consumer", ABNB: "Consumer", UBER: "Consumer",
+  // Finance
   JPM: "Finance", V: "Finance", MA: "Finance", BAC: "Finance",
-  GS: "Finance", MS: "Finance",
-  JNJ: "Health", UNH: "Health", PFE: "Health", ABT: "Health",
-  MRK: "Health", LLY: "Health", ABBV: "Health", TMO: "Health",
-  MDT: "Health", DHR: "Health",
-  XOM: "Energy", CVX: "Energy", NEE: "Energy",
-  INTC: "Tech", CSCO: "Tech", ADBE: "Tech", CRM: "Tech",
-  AVGO: "Tech", TXN: "Tech", QCOM: "Tech", ACN: "Tech",
-  VZ: "Telecom", CMCSA: "Telecom",
-  PG: "Consumer", KO: "Consumer", PEP: "Consumer",
-  UPS: "Industrial", LIN: "Industrial",
+  GS: "Finance", MS: "Finance", PYPL: "Finance", AXP: "Finance",
+  BLK: "Finance", SCHW: "Finance", C: "Finance", WFC: "Finance", USB: "Finance",
+  // Healthcare
+  JNJ: "Healthcare", UNH: "Healthcare", PFE: "Healthcare", ABT: "Healthcare",
+  MRK: "Healthcare", LLY: "Healthcare", ABBV: "Healthcare", TMO: "Healthcare",
+  MDT: "Healthcare", DHR: "Healthcare", AMGN: "Healthcare", GILD: "Healthcare",
+  BMY: "Healthcare", ISRG: "Healthcare", REGN: "Healthcare", VRTX: "Healthcare",
+  // Energy
+  XOM: "Energy", CVX: "Energy", NEE: "Energy", COP: "Energy", SLB: "Energy",
+  EOG: "Energy", OXY: "Energy", MPC: "Energy", PSX: "Energy", VLO: "Energy",
+  // Industrial
+  UPS: "Industrial", LIN: "Industrial", CAT: "Industrial", DE: "Industrial",
+  HON: "Industrial", GE: "Industrial", RTX: "Industrial", BA: "Industrial",
+  LMT: "Industrial", MMM: "Industrial", FDX: "Industrial",
+  // Telecom
+  VZ: "Telecom", CMCSA: "Telecom", T: "Telecom", TMUS: "Telecom", CHTR: "Telecom",
 };
 
 function getSectorColor(change: number): string {

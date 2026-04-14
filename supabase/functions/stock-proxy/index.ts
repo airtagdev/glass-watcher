@@ -22,7 +22,8 @@ serve(async (req) => {
         return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const results = await Promise.all(
+      // Fetch chart data for all symbols in parallel
+      const chartResults = await Promise.all(
         symbolList.map(async (symbol) => {
           try {
             const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
@@ -55,13 +56,38 @@ serve(async (req) => {
               fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
               regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
               regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
-              trailingPE: meta.trailingPE || null,
+              trailingPE: null as number | null,
             };
           } catch {
             return null;
           }
         })
       );
+
+      // Try to fetch P/E ratios via the quote summary endpoint
+      const results = chartResults.filter(Boolean) as any[];
+      try {
+        const peSymbols = results.map((r: any) => r.symbol).join(",");
+        const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(peSymbols)}&fields=trailingPE`;
+        const quoteRes = await fetch(quoteUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
+        });
+        if (quoteRes.ok) {
+          const quoteData = await quoteRes.json();
+          const quotes = quoteData.quoteResponse?.result || [];
+          const peMap: Record<string, number> = {};
+          for (const q of quotes) {
+            if (q.trailingPE) peMap[q.symbol] = q.trailingPE;
+          }
+          for (const r of results) {
+            if (peMap[r.symbol]) r.trailingPE = peMap[r.symbol];
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch P/E ratios:", e);
+      }
 
       return new Response(JSON.stringify(results.filter(Boolean)), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

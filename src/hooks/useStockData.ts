@@ -13,6 +13,7 @@ export interface StockQuote {
   fiftyTwoWeekLow: number;
   regularMarketDayHigh: number;
   regularMarketDayLow: number;
+  trailingPE?: number;
 }
 
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {

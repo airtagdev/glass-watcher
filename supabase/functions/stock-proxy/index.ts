@@ -55,6 +55,7 @@ serve(async (req) => {
               fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
               regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
               regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
+              trailingPE: meta.trailingPE || null,
             };
           } catch {
             return null;

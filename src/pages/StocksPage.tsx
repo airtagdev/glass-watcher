@@ -86,6 +86,10 @@ export default function StocksPage() {
               price={s.regularMarketPrice}
               changePercent={s.regularMarketChangePercent}
               change={s.regularMarketChange}
+              dayHigh={s.regularMarketDayHigh}
+              dayLow={s.regularMarketDayLow}
+              high52w={s.fiftyTwoWeekHigh}
+              low52w={s.fiftyTwoWeekLow}
               isWatched={isInWatchlist(`stock-${s.symbol}`)}
               onToggleWatch={() => handleToggle(s)}
               onClick={() => setSelectedStock(s)}

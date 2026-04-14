@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles, Send, Loader2 } from "lucide-react";
 import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "@/lib/format";
 import { Input } from "@/components/ui/input";
+import { computeConfidence } from "@/lib/confidenceScore";
+import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 
 interface TickerDetailProps {
   symbol: string;
@@ -41,6 +43,7 @@ export function TickerDetail({
   onClose,
 }: TickerDetailProps) {
   const isPositive = (changePercent ?? 0) >= 0;
+  const confidence = computeConfidence({ changePercent, dayHigh, dayLow, high52w, low52w, price });
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -124,6 +127,7 @@ export function TickerDetail({
             <div>
               <h2 className="text-xl font-bold text-foreground">{symbol.toUpperCase()}</h2>
               <p className="text-sm text-muted-foreground">{name}</p>
+              <ConfidenceBadge confidence={confidence} />
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">

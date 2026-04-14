@@ -1,5 +1,7 @@
 import { Plus, Check, Pin } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/format";
+import { computeConfidence } from "@/lib/confidenceScore";
+import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 
 interface TickerCardProps {
   symbol: string;
@@ -31,6 +33,7 @@ export function TickerCard({
   canPin,
 }: TickerCardProps) {
   const isPositive = changePercent >= 0;
+  const confidence = computeConfidence({ changePercent });
 
   return (
     <div
@@ -51,6 +54,7 @@ export function TickerCard({
           {isPinned && <Pin className="w-3 h-3 text-primary shrink-0" />}
         </div>
         <p className="text-xs text-muted-foreground truncate">{name}</p>
+        <ConfidenceBadge confidence={confidence} compact />
       </div>
       <div className="text-right mr-2">
         <p className="text-sm font-semibold text-foreground">{formatCurrency(price)}</p>

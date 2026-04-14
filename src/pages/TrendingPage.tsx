@@ -101,6 +101,7 @@ export default function TrendingPage() {
         volume: s.regularMarketVolume,
         dayHigh: s.regularMarketDayHigh,
         dayLow: s.regularMarketDayLow,
+        trailingPE: s.trailingPE,
       };
     }
     return {

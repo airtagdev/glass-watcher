@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
-const YAHOO_API = "https://query1.finance.yahoo.com/v7/finance/quote";
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

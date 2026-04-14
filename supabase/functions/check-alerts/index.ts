@@ -59,18 +59,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch stock prices via our own stock-proxy to avoid Yahoo blocking
+    // Fetch stock prices via our own stock-proxy
     if (stockAlerts.length > 0) {
       const symbols = [...new Set(stockAlerts.map((a: any) => a.ticker_symbol.toUpperCase()))];
       try {
-        const url = `${supabaseUrl}/functions/v1/stock-proxy?symbols=${symbols.join(",")}`;
+        const url = `${supabaseUrl}/functions/v1/stock-proxy?action=quotes&symbols=${symbols.join(",")}`;
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${serviceRoleKey}` },
         });
         if (res.ok) {
-          const data = await res.json();
-          const quotes = data.quotes || data.quoteResponse?.result || [];
-          for (const q of quotes) {
+          const quotes = await res.json();
+          for (const q of (Array.isArray(quotes) ? quotes : [])) {
             const sym = q.symbol?.toUpperCase();
             if (!sym) continue;
             prices[`stock:${sym}`] = q.regularMarketPrice;

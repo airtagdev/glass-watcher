@@ -235,7 +235,7 @@ export default function MarketMapPage() {
   const handleCryptoToggle = (c: CryptoTicker) => {
     const id = `crypto-${c.id}`;
     if (isInWatchlist(id)) removeFromWatchlist(id);
-    else addToWatchlist({ id, symbol: c.symbol.toUpperCase(), name: c.name, type: "crypto", coinId: c.id, image: c.image });
+    else addToWatchlist({ id, symbol: c.symbol.toUpperCase(), name: c.name, type: "crypto" });
   };
 
   return (

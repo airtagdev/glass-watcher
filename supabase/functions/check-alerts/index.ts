@@ -87,7 +87,10 @@ Deno.serve(async (req) => {
     const notifications: { deviceId: string; title: string; body: string }[] = [];
 
     for (const alert of alerts) {
-      const key = `${alert.ticker_type}:${alert.ticker_symbol.toLowerCase()}`;
+      const sym = alert.ticker_type === "stock"
+        ? alert.ticker_symbol.toUpperCase()
+        : alert.ticker_symbol.toLowerCase();
+      const key = `${alert.ticker_type}:${sym}`;
       const currentPrice = prices[key];
       const currentChange = prices[`${key}:change`] || 0;
 

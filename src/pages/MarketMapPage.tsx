@@ -239,8 +239,11 @@ export default function MarketMapPage() {
           </div>
         )}
 
-        {/* Legend */}
-        <div className="mt-6 glass rounded-xl p-3">
+      </div>
+
+      {/* Legend pinned above bottom nav */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 px-4 pb-2">
+        <div className="max-w-lg mx-auto glass rounded-xl p-3 border border-glass-border/30">
           <p className="text-xs text-muted-foreground mb-2 font-medium">Legend</p>
           <div className="flex items-center gap-1">
             <div className="h-3 flex-1 rounded" style={{ background: "linear-gradient(to right, hsl(0,76%,36%), hsl(0,30%,58%), hsl(0,0%,70%), hsl(142,30%,58%), hsl(142,76%,36%))" }} />

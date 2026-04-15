@@ -21,6 +21,8 @@ export default function SettingsPage() {
   const { permission, isSubscribed, subscribe } = usePushNotifications();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {

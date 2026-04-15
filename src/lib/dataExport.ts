@@ -1,3 +1,6 @@
+import { supabase } from "@/integrations/supabase/client";
+import { getDeviceId } from "@/lib/deviceId";
+
 export interface AppExportData {
   version: 1;
   exportedAt: string;
@@ -5,6 +8,7 @@ export interface AppExportData {
   pinnedIds: string[];
   portfolio: unknown[];
   settings: Record<string, unknown>;
+  alerts: unknown[];
 }
 
 const KEYS = {
@@ -23,7 +27,22 @@ function safeJSON(key: string): unknown {
   }
 }
 
+async function fetchAlerts(): Promise<unknown[]> {
+  try {
+    const deviceId = getDeviceId();
+    const { data } = await supabase
+      .from("price_alerts")
+      .select("*")
+      .eq("device_id", deviceId);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function exportData(): Promise<void> {
+  const alerts = await fetchAlerts();
+
   const data: AppExportData = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -31,6 +50,7 @@ export async function exportData(): Promise<void> {
     pinnedIds: (safeJSON(KEYS.pinned) as string[]) ?? [],
     portfolio: (safeJSON(KEYS.portfolio) as unknown[]) ?? [],
     settings: (safeJSON(KEYS.settings) as Record<string, unknown>) ?? {},
+    alerts,
   };
 
   const filename = `tradex-data-export-${new Date().toISOString().slice(0, 10)}.json`;
@@ -52,7 +72,7 @@ export async function exportData(): Promise<void> {
 export function importData(file: File): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(reader.result as string) as AppExportData;
 
@@ -72,6 +92,25 @@ export function importData(file: File): Promise<{ success: boolean; error?: stri
         }
         if (data.settings && typeof data.settings === "object") {
           localStorage.setItem(KEYS.settings, JSON.stringify(data.settings));
+        }
+
+        // Restore alerts to Supabase
+        if (Array.isArray(data.alerts) && data.alerts.length > 0) {
+          const deviceId = getDeviceId();
+          // Clear existing alerts for this device
+          await supabase.from("price_alerts").delete().eq("device_id", deviceId);
+          // Insert imported alerts (strip id/created_at to let DB regenerate)
+          const rows = data.alerts.map((a: any) => ({
+            device_id: deviceId,
+            ticker_symbol: a.ticker_symbol,
+            ticker_name: a.ticker_name,
+            ticker_type: a.ticker_type,
+            alert_type: a.alert_type,
+            value: a.value,
+            direction: a.direction || null,
+            triggered: a.triggered ?? false,
+          }));
+          await supabase.from("price_alerts").insert(rows);
         }
 
         resolve({ success: true });

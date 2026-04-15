@@ -102,6 +102,10 @@ export default function TrendingPage() {
         dayHigh: s.regularMarketDayHigh,
         dayLow: s.regularMarketDayLow,
         trailingPE: s.trailingPE,
+        postMarketPrice: s.postMarketPrice,
+        postMarketChange: s.postMarketChange,
+        postMarketChangePercent: s.postMarketChangePercent,
+        marketState: s.marketState,
       };
     }
     return {

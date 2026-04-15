@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Settings, Shield, Trash2, Bell, BarChart3, FileText } from "lucide-react";
+import { useState, useRef } from "react";
+import { Settings, Shield, Trash2, Bell, BarChart3, FileText, Download, Upload } from "lucide-react";
+import { exportData, importData } from "@/lib/dataExport";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/useSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -20,6 +21,25 @@ export default function SettingsPage() {
   const { permission, isSubscribed, subscribe } = usePushNotifications();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    exportData();
+    toast.success("Data exported successfully!");
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const result = await importData(file);
+    if (result.success) {
+      toast.success("Data imported! Reloading…");
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      toast.error(result.error ?? "Import failed");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handlePushToggle = async (checked: boolean) => {
     if (checked && !isSubscribed) {
@@ -98,6 +118,43 @@ export default function SettingsPage() {
           </div>
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
+
+        {/* Export Data */}
+        <button
+          onClick={handleExport}
+          className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        >
+          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Download className="w-4.5 h-4.5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Export Data</p>
+            <p className="text-xs text-muted-foreground">Download a backup of all your data</p>
+          </div>
+          <span className="ml-auto text-muted-foreground">›</span>
+        </button>
+
+        {/* Import Data */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        >
+          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Upload className="w-4.5 h-4.5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Import Data</p>
+            <p className="text-xs text-muted-foreground">Restore from a previously exported backup</p>
+          </div>
+          <span className="ml-auto text-muted-foreground">›</span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleImport}
+        />
 
         {/* Reset Data */}
         <button

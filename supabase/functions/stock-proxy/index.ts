@@ -33,12 +33,34 @@ async function fetchTrailingPE(symbol: string): Promise<number | null> {
   }
 }
 
+async function fetchPostMarketData(symbol: string): Promise<{ postMarketPrice: number | null; postMarketChange: number | null; postMarketChangePercent: number | null; marketState: string | null }> {
+  const fallback = { postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null, marketState: null };
+  try {
+    // Use the quote summary endpoint which includes post-market data
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=price`;
+    const res = await fetch(url, { headers: YAHOO_HEADERS });
+    if (!res.ok) return fallback;
+    const data = await res.json();
+    const price = data?.quoteSummary?.result?.[0]?.price;
+    if (!price) return fallback;
+    return {
+      postMarketPrice: price.postMarketPrice?.raw ?? null,
+      postMarketChange: price.postMarketChange?.raw ?? null,
+      postMarketChangePercent: price.postMarketChangePercent?.raw != null ? price.postMarketChangePercent.raw * 100 : null,
+      marketState: price.marketState ?? null,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 async function fetchStockQuote(symbol: string) {
   try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=true`;
-    const [quoteRes, trailingPE] = await Promise.all([
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+    const [quoteRes, trailingPE, postMarket] = await Promise.all([
       fetch(yahooUrl, { headers: YAHOO_HEADERS }),
       fetchTrailingPE(symbol),
+      fetchPostMarketData(symbol),
     ]);
 
     if (!quoteRes.ok) {
@@ -51,20 +73,10 @@ async function fetchStockQuote(symbol: string) {
     if (!result) return null;
 
     const meta = result.meta;
-    console.log(`[${symbol}] meta keys:`, Object.keys(meta));
-    console.log(`[${symbol}] marketState:`, meta.marketState, 'postMarketPrice:', meta.postMarketPrice, 'postMarketSource:', meta.postMarketSource);
-
     const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
     const price = meta.regularMarketPrice || 0;
     const change = price - prevClose;
     const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-
-    // After-hours / post-market data
-    const postMarketPrice = meta.postMarketPrice ?? null;
-    const postMarketChange = meta.postMarketChange ?? null;
-    const postMarketChangePercent = meta.postMarketChangePercent ?? null;
-    const postMarketTime = meta.postMarketTime ?? null;
-    const marketState = meta.marketState ?? null;
 
     return {
       symbol: meta.symbol || symbol,
@@ -79,10 +91,7 @@ async function fetchStockQuote(symbol: string) {
       regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
       regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
       trailingPE,
-      postMarketPrice,
-      postMarketChange,
-      postMarketChangePercent,
-      marketState,
+      ...postMarket,
     };
   } catch {
     return null;

@@ -137,7 +137,7 @@ export function TickerDetail({
             <div>
               <h2 className="text-xl font-bold text-foreground">{symbol.toUpperCase()}</h2>
               <p className="text-sm text-muted-foreground">{name}</p>
-              <ConfidenceBadge confidence={confidence} />
+              {settings.showConfidenceScore && <ConfidenceBadge confidence={confidence} />}
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">

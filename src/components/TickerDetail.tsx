@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { computeConfidence } from "@/lib/confidenceScore";
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 import { useStockDetail } from "@/hooks/useStockData";
+import { useSettings } from "@/hooks/useSettings";
 
 interface TickerDetailProps {
   symbol: string;

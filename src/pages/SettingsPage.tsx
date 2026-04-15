@@ -119,6 +119,43 @@ export default function SettingsPage() {
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
 
+        {/* Export Data */}
+        <button
+          onClick={handleExport}
+          className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        >
+          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Download className="w-4.5 h-4.5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Export Data</p>
+            <p className="text-xs text-muted-foreground">Download a backup of all your data</p>
+          </div>
+          <span className="ml-auto text-muted-foreground">›</span>
+        </button>
+
+        {/* Import Data */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        >
+          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Upload className="w-4.5 h-4.5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Import Data</p>
+            <p className="text-xs text-muted-foreground">Restore from a previously exported backup</p>
+          </div>
+          <span className="ml-auto text-muted-foreground">›</span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleImport}
+        />
+
         {/* Reset Data */}
         <button
           onClick={() => setShowResetConfirm(true)}

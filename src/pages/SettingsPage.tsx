@@ -163,7 +163,7 @@ export default function SettingsPage() {
           type="file"
           accept=".json"
           className="hidden"
-          onChange={handleImport}
+          onChange={handleFileSelect}
         />
 
         {/* Reset Data */}

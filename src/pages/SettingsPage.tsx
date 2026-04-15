@@ -21,6 +21,25 @@ export default function SettingsPage() {
   const { permission, isSubscribed, subscribe } = usePushNotifications();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    exportData();
+    toast.success("Data exported successfully!");
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const result = await importData(file);
+    if (result.success) {
+      toast.success("Data imported! Reloading…");
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      toast.error(result.error ?? "Import failed");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handlePushToggle = async (checked: boolean) => {
     if (checked && !isSubscribed) {

@@ -21,6 +21,8 @@ export default function SettingsPage() {
   const { permission, isSubscribed, subscribe } = usePushNotifications();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -28,17 +30,25 @@ export default function SettingsPage() {
     toast.success("Data exported successfully!");
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await importData(file);
+    setPendingFile(file);
+    setShowImportConfirm(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImportConfirm = async () => {
+    if (!pendingFile) return;
+    const result = await importData(pendingFile);
+    setPendingFile(null);
+    setShowImportConfirm(false);
     if (result.success) {
       toast.success("Data imported! Reloading…");
       setTimeout(() => window.location.reload(), 800);
     } else {
       toast.error(result.error ?? "Import failed");
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handlePushToggle = async (checked: boolean) => {
@@ -153,7 +163,7 @@ export default function SettingsPage() {
           type="file"
           accept=".json"
           className="hidden"
-          onChange={handleImport}
+          onChange={handleFileSelect}
         />
 
         {/* Reset Data */}
@@ -213,6 +223,24 @@ export default function SettingsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Reset Everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Import Confirmation */}
+      <AlertDialog open={showImportConfirm} onOpenChange={(open) => { setShowImportConfirm(open); if (!open) setPendingFile(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import Data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will overwrite your current watchlist, portfolio, pinned tickers, and settings with the data from the backup file. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleImportConfirm}>
+              Import
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

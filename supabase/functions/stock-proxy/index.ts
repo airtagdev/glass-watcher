@@ -56,6 +56,14 @@ async function fetchStockQuote(symbol: string) {
     const change = price - prevClose;
     const changePercent = prevClose ? (change / prevClose) * 100 : 0;
 
+    // After-hours / post-market data
+    const postMarketPrice = meta.postMarketPrice ?? null;
+    const postMarketChange = meta.postMarketChange ?? null;
+    const postMarketChangePercent = meta.postMarketChangePercent ?? null;
+    const postMarketTime = meta.postMarketTime ?? null;
+    // Market state: "REGULAR", "POST", "PRE", "CLOSED", etc.
+    const marketState = meta.marketState ?? null;
+
     return {
       symbol: meta.symbol || symbol,
       shortName: meta.shortName || meta.longName || symbol,
@@ -69,6 +77,10 @@ async function fetchStockQuote(symbol: string) {
       regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
       regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
       trailingPE,
+      postMarketPrice,
+      postMarketChange,
+      postMarketChangePercent,
+      marketState,
     };
   } catch {
     return null;

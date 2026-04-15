@@ -14,6 +14,10 @@ export interface StockQuote {
   regularMarketDayHigh: number;
   regularMarketDayLow: number;
   trailingPE?: number | null;
+  postMarketPrice?: number | null;
+  postMarketChange?: number | null;
+  postMarketChangePercent?: number | null;
+  marketState?: string | null;
 }
 
 async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {

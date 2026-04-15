@@ -22,6 +22,10 @@ interface TickerDetailProps {
   imageUrl?: string;
   trailingPE?: number | null;
   tickerType?: "stock" | "crypto";
+  postMarketPrice?: number | null;
+  postMarketChange?: number | null;
+  postMarketChangePercent?: number | null;
+  marketState?: string | null;
   isWatched: boolean;
   onToggleWatch: () => void;
   onClose: () => void;
@@ -44,6 +48,10 @@ export function TickerDetail({
   imageUrl,
   trailingPE,
   tickerType,
+  postMarketPrice,
+  postMarketChange,
+  postMarketChangePercent,
+  marketState,
   isWatched,
   onToggleWatch,
   onClose,
@@ -153,6 +161,14 @@ export function TickerDetail({
               {isPositive ? "+" : ""}{formatCurrency(Math.abs(change ?? 0))} ({formatPercent(changePercent)})
             </span>
           </div>
+          {tickerType === "stock" && marketState && marketState !== "REGULAR" && postMarketPrice != null && postMarketChange != null && postMarketChangePercent != null && (
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">After Hours:</span>
+              <span className={`text-xs font-medium ${postMarketChangePercent >= 0 ? "text-gain" : "text-loss"}`}>
+                {formatCurrency(postMarketPrice)} {postMarketChangePercent >= 0 ? "+" : ""}{formatCurrency(postMarketChange)} ({formatPercent(postMarketChangePercent)})
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">

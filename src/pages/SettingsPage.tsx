@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Settings, Shield, Trash2, Bell, BarChart3, FileText, Download, Upload } from "lucide-react";
+import type { AppExportData } from "@/lib/dataExport";
 import { exportData, importData } from "@/lib/dataExport";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/useSettings";
@@ -23,6 +24,7 @@ export default function SettingsPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<AppExportData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -34,7 +36,22 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setPendingFile(file);
-    setShowImportConfirm(true);
+    // Parse file for preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string) as AppExportData;
+        if (!data.version || !data.exportedAt) {
+          toast.error("Invalid backup file format");
+          return;
+        }
+        setImportPreview(data);
+        setShowImportConfirm(true);
+      } catch {
+        toast.error("Could not parse backup file");
+      }
+    };
+    reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -43,6 +60,7 @@ export default function SettingsPage() {
     const result = await importData(pendingFile);
     setPendingFile(null);
     setShowImportConfirm(false);
+    setImportPreview(null);
     if (result.success) {
       toast.success("Data imported! Reloading…");
       setTimeout(() => window.location.reload(), 800);
@@ -229,12 +247,44 @@ export default function SettingsPage() {
       </AlertDialog>
 
       {/* Import Confirmation */}
-      <AlertDialog open={showImportConfirm} onOpenChange={(open) => { setShowImportConfirm(open); if (!open) setPendingFile(null); }}>
+      <AlertDialog open={showImportConfirm} onOpenChange={(open) => { setShowImportConfirm(open); if (!open) { setPendingFile(null); setImportPreview(null); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Import Data?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will overwrite your current watchlist, portfolio, pinned tickers, and settings with the data from the backup file. This action cannot be undone.
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  This will overwrite your current data with the backup from{" "}
+                  <span className="font-semibold text-foreground">
+                    {importPreview?.exportedAt ? new Date(importPreview.exportedAt).toLocaleDateString() : "unknown date"}
+                  </span>. This cannot be undone.
+                </p>
+                {importPreview && (
+                  <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-1.5 text-sm">
+                    <p className="font-medium text-foreground mb-2">Backup contains:</p>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Watchlist items</span>
+                      <span className="font-medium text-foreground">{importPreview.watchlist?.length ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Pinned tickers</span>
+                      <span className="font-medium text-foreground">{importPreview.pinnedIds?.length ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Portfolio trades</span>
+                      <span className="font-medium text-foreground">{importPreview.portfolio?.length ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Price alerts</span>
+                      <span className="font-medium text-foreground">{importPreview.alerts?.length ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Settings</span>
+                      <span className="font-medium text-foreground">{importPreview.settings && Object.keys(importPreview.settings).length > 0 ? "Yes" : "No"}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

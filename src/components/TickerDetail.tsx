@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { computeConfidence } from "@/lib/confidenceScore";
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 import { useStockDetail } from "@/hooks/useStockData";
+import { useSettings } from "@/hooks/useSettings";
 
 interface TickerDetailProps {
   symbol: string;
@@ -52,6 +53,7 @@ export function TickerDetail({
   const shouldFetchStockDetail = tickerType === "stock" && (trailingPE == null || trailingPE <= 0);
   const { data: stockDetailData } = useStockDetail(shouldFetchStockDetail ? symbol : "");
   const resolvedTrailingPE = tickerType === "stock" ? trailingPE ?? stockDetailData?.trailingPE ?? null : null;
+  const { settings } = useSettings();
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -135,7 +137,7 @@ export function TickerDetail({
             <div>
               <h2 className="text-xl font-bold text-foreground">{symbol.toUpperCase()}</h2>
               <p className="text-sm text-muted-foreground">{name}</p>
-              <ConfidenceBadge confidence={confidence} />
+              {settings.showConfidenceScore && <ConfidenceBadge confidence={confidence} />}
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">

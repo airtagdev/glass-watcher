@@ -364,6 +364,10 @@ export default function MarketMapPage() {
           dayHigh={selectedStock.regularMarketDayHigh}
           dayLow={selectedStock.regularMarketDayLow}
           trailingPE={selectedStock.trailingPE}
+          postMarketPrice={selectedStock.postMarketPrice}
+          postMarketChange={selectedStock.postMarketChange}
+          postMarketChangePercent={selectedStock.postMarketChangePercent}
+          marketState={selectedStock.marketState}
           tickerType="stock"
           isWatched={isInWatchlist(`stock-${selectedStock.symbol}`)}
           onToggleWatch={() => handleStockToggle(selectedStock)}

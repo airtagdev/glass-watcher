@@ -112,6 +112,10 @@ export default function StocksPage() {
           dayHigh={detailStock.regularMarketDayHigh}
           dayLow={detailStock.regularMarketDayLow}
           trailingPE={detailStock.trailingPE}
+          postMarketPrice={detailStock.postMarketPrice}
+          postMarketChange={detailStock.postMarketChange}
+          postMarketChangePercent={detailStock.postMarketChangePercent}
+          marketState={detailStock.marketState}
           tickerType="stock"
           isWatched={isInWatchlist(`stock-${detailStock.symbol}`)}
           onToggleWatch={() => handleToggle(detailStock)}

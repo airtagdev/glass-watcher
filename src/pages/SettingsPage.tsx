@@ -30,17 +30,25 @@ export default function SettingsPage() {
     toast.success("Data exported successfully!");
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await importData(file);
+    setPendingFile(file);
+    setShowImportConfirm(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImportConfirm = async () => {
+    if (!pendingFile) return;
+    const result = await importData(pendingFile);
+    setPendingFile(null);
+    setShowImportConfirm(false);
     if (result.success) {
       toast.success("Data imported! Reloading…");
       setTimeout(() => window.location.reload(), 800);
     } else {
       toast.error(result.error ?? "Import failed");
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handlePushToggle = async (checked: boolean) => {

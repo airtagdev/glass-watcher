@@ -23,7 +23,7 @@ function safeJSON(key: string): unknown {
   }
 }
 
-export function exportData(): void {
+export async function exportData(): Promise<void> {
   const data: AppExportData = {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -33,13 +33,20 @@ export function exportData(): void {
     settings: (safeJSON(KEYS.settings) as Record<string, unknown>) ?? {},
   };
 
+  const filename = `tradex-data-export-${new Date().toISOString().slice(0, 10)}.json`;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `tradex-data-export-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const file = new File([blob], filename, { type: "application/json" });
+
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: "TradeX Data Export" });
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function importData(file: File): Promise<{ success: boolean; error?: string }> {

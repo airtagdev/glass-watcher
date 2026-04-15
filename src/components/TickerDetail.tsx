@@ -22,6 +22,10 @@ interface TickerDetailProps {
   imageUrl?: string;
   trailingPE?: number | null;
   tickerType?: "stock" | "crypto";
+  postMarketPrice?: number | null;
+  postMarketChange?: number | null;
+  postMarketChangePercent?: number | null;
+  marketState?: string | null;
   isWatched: boolean;
   onToggleWatch: () => void;
   onClose: () => void;

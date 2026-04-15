@@ -35,7 +35,7 @@ async function fetchTrailingPE(symbol: string): Promise<number | null> {
 
 async function fetchStockQuote(symbol: string) {
   try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=true`;
     const [quoteRes, trailingPE] = await Promise.all([
       fetch(yahooUrl, { headers: YAHOO_HEADERS }),
       fetchTrailingPE(symbol),
@@ -51,6 +51,9 @@ async function fetchStockQuote(symbol: string) {
     if (!result) return null;
 
     const meta = result.meta;
+    console.log(`[${symbol}] meta keys:`, Object.keys(meta));
+    console.log(`[${symbol}] marketState:`, meta.marketState, 'postMarketPrice:', meta.postMarketPrice, 'postMarketSource:', meta.postMarketSource);
+
     const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
     const price = meta.regularMarketPrice || 0;
     const change = price - prevClose;
@@ -61,7 +64,6 @@ async function fetchStockQuote(symbol: string) {
     const postMarketChange = meta.postMarketChange ?? null;
     const postMarketChangePercent = meta.postMarketChangePercent ?? null;
     const postMarketTime = meta.postMarketTime ?? null;
-    // Market state: "REGULAR", "POST", "PRE", "CLOSED", etc.
     const marketState = meta.marketState ?? null;
 
     return {

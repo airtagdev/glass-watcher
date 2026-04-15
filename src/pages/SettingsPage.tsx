@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Settings, Shield, Trash2, Bell, BarChart3, FileText } from "lucide-react";
+import { useState, useRef } from "react";
+import { Settings, Shield, Trash2, Bell, BarChart3, FileText, Download, Upload } from "lucide-react";
+import { exportData, importData } from "@/lib/dataExport";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/useSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";

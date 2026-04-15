@@ -33,9 +33,60 @@ async function fetchTrailingPE(symbol: string): Promise<number | null> {
   }
 }
 
+function deriveMarketState(currentTradingPeriod: any): string {
+  if (!currentTradingPeriod) return "REGULAR";
+  const now = Math.floor(Date.now() / 1000);
+  const pre = currentTradingPeriod.pre;
+  const regular = currentTradingPeriod.regular;
+  const post = currentTradingPeriod.post;
+
+  if (regular && now >= regular.start && now < regular.end) return "REGULAR";
+  if (post && now >= post.start && now < post.end) return "POST";
+  if (pre && now >= pre.start && now < pre.end) return "PRE";
+  return "CLOSED";
+}
+
+function extractPostMarketData(result: any, regularClose: number) {
+  const ctp = result.meta?.currentTradingPeriod;
+  const marketState = deriveMarketState(ctp);
+
+  if (marketState === "REGULAR") {
+    return { postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null, marketState };
+  }
+
+  // When market is not in regular hours, get the latest candle price from post-market data
+  const timestamps: number[] = result.timestamp || [];
+  const closes: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
+  const regularEnd = ctp?.regular?.end ?? 0;
+
+  // Find the last non-null close after regular market end
+  let postPrice: number | null = null;
+  for (let i = timestamps.length - 1; i >= 0; i--) {
+    if (timestamps[i] >= regularEnd && closes[i] != null) {
+      postPrice = closes[i];
+      break;
+    }
+  }
+
+  if (postPrice == null) {
+    return { postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null, marketState };
+  }
+
+  const postChange = postPrice - regularClose;
+  const postChangePercent = regularClose ? (postChange / regularClose) * 100 : 0;
+
+  return {
+    postMarketPrice: postPrice,
+    postMarketChange: postChange,
+    postMarketChangePercent: postChangePercent,
+    marketState,
+  };
+}
+
 async function fetchStockQuote(symbol: string) {
   try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d&includePrePost=false`;
+    // Use 1m interval with includePrePost to get after-hours candles
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m&includePrePost=true`;
     const [quoteRes, trailingPE] = await Promise.all([
       fetch(yahooUrl, { headers: YAHOO_HEADERS }),
       fetchTrailingPE(symbol),
@@ -56,13 +107,7 @@ async function fetchStockQuote(symbol: string) {
     const change = price - prevClose;
     const changePercent = prevClose ? (change / prevClose) * 100 : 0;
 
-    // After-hours / post-market data
-    const postMarketPrice = meta.postMarketPrice ?? null;
-    const postMarketChange = meta.postMarketChange ?? null;
-    const postMarketChangePercent = meta.postMarketChangePercent ?? null;
-    const postMarketTime = meta.postMarketTime ?? null;
-    // Market state: "REGULAR", "POST", "PRE", "CLOSED", etc.
-    const marketState = meta.marketState ?? null;
+    const postMarket = extractPostMarketData(result, price);
 
     return {
       symbol: meta.symbol || symbol,
@@ -77,10 +122,7 @@ async function fetchStockQuote(symbol: string) {
       regularMarketDayHigh: meta.regularMarketDayHigh || meta.dayHigh || 0,
       regularMarketDayLow: meta.regularMarketDayLow || meta.dayLow || 0,
       trailingPE,
-      postMarketPrice,
-      postMarketChange,
-      postMarketChangePercent,
-      marketState,
+      ...postMarket,
     };
   } catch {
     return null;

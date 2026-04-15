@@ -161,7 +161,14 @@ export function TickerDetail({
               {isPositive ? "+" : ""}{formatCurrency(Math.abs(change ?? 0))} ({formatPercent(changePercent)})
             </span>
           </div>
-        </div>
+          {tickerType === "stock" && marketState && marketState !== "REGULAR" && postMarketPrice != null && postMarketChange != null && postMarketChangePercent != null && (
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">After Hours:</span>
+              <span className={`text-xs font-medium ${postMarketChangePercent >= 0 ? "text-gain" : "text-loss"}`}>
+                {formatCurrency(postMarketPrice)} {postMarketChangePercent >= 0 ? "+" : ""}{formatCurrency(postMarketChange)} ({formatPercent(postMarketChangePercent)})
+              </span>
+            </div>
+          )}
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           {high52w != null && high52w > 0 && (

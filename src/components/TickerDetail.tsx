@@ -53,6 +53,7 @@ export function TickerDetail({
   const shouldFetchStockDetail = tickerType === "stock" && (trailingPE == null || trailingPE <= 0);
   const { data: stockDetailData } = useStockDetail(shouldFetchStockDetail ? symbol : "");
   const resolvedTrailingPE = tickerType === "stock" ? trailingPE ?? stockDetailData?.trailingPE ?? null : null;
+  const { settings } = useSettings();
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);

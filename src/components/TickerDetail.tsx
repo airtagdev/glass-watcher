@@ -169,6 +169,7 @@ export function TickerDetail({
               </span>
             </div>
           )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           {high52w != null && high52w > 0 && (

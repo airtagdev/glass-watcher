@@ -46,7 +46,7 @@ export function useSettings() {
     fetchCloud();
 
     const channel = supabase
-      .channel(`user_settings:${user.id}`)
+      .channel(`user_settings:${user.id}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "user_settings", filter: `user_id=eq.${user.id}` },

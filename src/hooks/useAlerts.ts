@@ -55,7 +55,7 @@ export function useAlerts() {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`price_alerts:${user.id}`)
+      .channel(`price_alerts:${user.id}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "price_alerts", filter: `user_id=eq.${user.id}` },

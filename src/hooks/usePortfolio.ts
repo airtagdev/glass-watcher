@@ -74,7 +74,7 @@ export function usePortfolio() {
     load();
 
     const channel = supabase
-      .channel(`user_portfolio:${user.id}`)
+      .channel(`user_portfolio:${user.id}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "user_portfolio", filter: `user_id=eq.${user.id}` },

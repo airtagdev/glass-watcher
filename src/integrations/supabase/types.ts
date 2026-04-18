@@ -25,6 +25,7 @@ export type Database = {
           ticker_symbol: string
           ticker_type: string
           triggered: boolean
+          user_id: string | null
           value: number
         }
         Insert: {
@@ -37,6 +38,7 @@ export type Database = {
           ticker_symbol: string
           ticker_type: string
           triggered?: boolean
+          user_id?: string | null
           value: number
         }
         Update: {
@@ -49,7 +51,29 @@ export type Database = {
           ticker_symbol?: string
           ticker_type?: string
           triggered?: boolean
+          user_id?: string | null
           value?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -77,6 +101,132 @@ export type Database = {
           endpoint?: string
           id?: string
           p256dh?: string
+        }
+        Relationships: []
+      }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_name: string
+          id: string
+          last_seen_at: string
+          platform: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_name: string
+          id?: string
+          last_seen_at?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_portfolio: {
+        Row: {
+          created_at: string
+          id: string
+          price: number
+          quantity: number
+          ticker_id: string
+          ticker_name: string
+          ticker_symbol: string
+          ticker_type: string
+          trade_date: string
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price: number
+          quantity: number
+          ticker_id: string
+          ticker_name: string
+          ticker_symbol: string
+          ticker_type: string
+          trade_date: string
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price?: number
+          quantity?: number
+          ticker_id?: string
+          ticker_name?: string
+          ticker_symbol?: string
+          ticker_type?: string
+          trade_date?: string
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          created_at: string
+          name: string
+          pinned: boolean
+          sort_order: number
+          symbol: string
+          ticker_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          pinned?: boolean
+          sort_order?: number
+          symbol: string
+          ticker_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          pinned?: boolean
+          sort_order?: number
+          symbol?: string
+          ticker_id?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }

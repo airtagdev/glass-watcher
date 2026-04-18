@@ -7,6 +7,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { AppLoader } from "@/components/AppLoader";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { SyncGate } from "@/components/SyncGate";
 import Index from "./pages/Index";
 import StocksPage from "./pages/StocksPage";
 import CryptoPage from "./pages/CryptoPage";
@@ -16,6 +18,8 @@ import TrendingPage from "./pages/TrendingPage";
 import NotFound from "./pages/NotFound";
 import MarketMapPage from "./pages/MarketMapPage";
 import SettingsPage from "./pages/SettingsPage";
+import AuthPage from "./pages/AuthPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -24,25 +28,30 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <DisclaimerModal />
       <BrowserRouter>
-        <ScrollToTop />
-        <AppLoader>
-          <div className="min-h-screen bg-background">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/stocks" element={<StocksPage />} />
-              <Route path="/crypto" element={<CryptoPage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/trending" element={<TrendingPage />} />
-              <Route path="/market-map" element={<MarketMapPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <BottomNav />
-          </div>
-        </AppLoader>
+        <AuthProvider>
+          <DisclaimerModal />
+          <SyncGate />
+          <ScrollToTop />
+          <AppLoader>
+            <div className="min-h-screen bg-background">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/stocks" element={<StocksPage />} />
+                <Route path="/crypto" element={<CryptoPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/trending" element={<TrendingPage />} />
+                <Route path="/market-map" element={<MarketMapPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <BottomNav />
+            </div>
+          </AppLoader>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

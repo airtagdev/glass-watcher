@@ -1,10 +1,14 @@
-import { useState, useRef, useEffect } from "react";
-import { Settings, Shield, Trash2, Bell, BarChart3, FileText, Download, Upload } from "lucide-react";
+import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
+import { Settings, Trash2, Bell, BarChart3, FileText, Download, Upload, User, LogOut, Smartphone, X } from "lucide-react";
 import type { AppExportData } from "@/lib/dataExport";
 import { exportData, importData } from "@/lib/dataExport";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/useSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDevices } from "@/hooks/useDevices";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -17,18 +21,33 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export default function SettingsPage() {
   const { settings, update, resetAllData } = useSettings();
   const { permission, isSubscribed, subscribe } = usePushNotifications();
+  const { user, signOut } = useAuth();
+  const { devices, revokeDevice } = useDevices();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<AppExportData | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = () => {
-    exportData();
+  const handleExport = async () => {
+    await exportData();
     toast.success("Data exported successfully!");
   };
 
@@ -36,7 +55,6 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setPendingFile(file);
-    // Parse file for preview
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -83,17 +101,111 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    setShowSignOutConfirm(false);
+    toast.success("Signed out");
+  };
+
+  const handleRevoke = async (id: string) => {
+    await revokeDevice(id);
+    setRevokeTarget(null);
+    toast.success("Device removed");
+  };
+
   return (
     <div className="px-4 pt-14 pb-24">
-      {/* Header */}
       <div className="flex items-center gap-2 mb-6">
         <Settings className="w-5 h-5 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">Settings</h1>
       </div>
 
-      {/* Sections */}
+      {/* Account Section */}
+      <div className="mb-3">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Account</h2>
+        {user ? (
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <User className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
+                <p className="text-xs text-muted-foreground">Synced across your devices</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSignOutConfirm(true)}
+              className="w-full"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        ) : (
+          <Link to="/auth" className="glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform">
+            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <User className="w-4.5 h-4.5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Sign In to Sync</p>
+              <p className="text-xs text-muted-foreground">Sync watchlist, portfolio &amp; alerts across devices</p>
+            </div>
+            <span className="text-muted-foreground">›</span>
+          </Link>
+        )}
+      </div>
+
+      {/* Authorized Devices */}
+      {user && (
+        <div className="mb-3">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">
+            Authorized Devices
+          </h2>
+          <div className="glass-card overflow-hidden">
+            {devices.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">No devices yet</p>
+            ) : (
+              devices.map((d, i) => (
+                <div
+                  key={d.id}
+                  className={`flex items-center gap-3 p-4 ${i > 0 ? "border-t border-border/50" : ""}`}
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Smartphone className="w-4.5 h-4.5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground truncate">{d.device_name}</p>
+                      {d.isCurrent && (
+                        <span className="text-[10px] font-semibold text-primary bg-primary/15 px-1.5 py-0.5 rounded">
+                          THIS DEVICE
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Last seen {timeAgo(d.last_seen_at)}</p>
+                  </div>
+                  {!d.isCurrent && (
+                    <button
+                      onClick={() => setRevokeTarget(d.id)}
+                      className="p-2 text-loss hover:bg-loss/10 rounded-md"
+                      aria-label="Revoke device"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Preferences */}
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2 mt-3">Preferences</h2>
       <div className="flex flex-col gap-3">
-        {/* Confidence Score */}
         <div className="glass-card p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -110,7 +222,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Push Notifications */}
         <div className="glass-card p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -132,7 +243,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Re-read Disclaimer */}
         <button
           onClick={() => setShowDisclaimer(true)}
           className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
@@ -147,7 +257,6 @@ export default function SettingsPage() {
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
 
-        {/* Export Data */}
         <button
           onClick={handleExport}
           className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
@@ -162,7 +271,6 @@ export default function SettingsPage() {
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
 
-        {/* Import Data */}
         <button
           onClick={() => fileInputRef.current?.click()}
           className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
@@ -176,15 +284,8 @@ export default function SettingsPage() {
           </div>
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
+        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileSelect} />
 
-        {/* Reset Data */}
         <button
           onClick={() => setShowResetConfirm(true)}
           className="glass-card p-4 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
@@ -194,13 +295,13 @@ export default function SettingsPage() {
           </div>
           <div>
             <p className="text-sm font-semibold text-loss">Reset All Data</p>
-            <p className="text-xs text-muted-foreground">Clear portfolio, watchlist, and saved preferences</p>
+            <p className="text-xs text-muted-foreground">Clear local portfolio, watchlist, and saved preferences</p>
           </div>
           <span className="ml-auto text-muted-foreground">›</span>
         </button>
       </div>
 
-      {/* Disclaimer Dialog */}
+      {/* Disclaimer */}
       <AlertDialog open={showDisclaimer} onOpenChange={setShowDisclaimer}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
@@ -225,13 +326,13 @@ export default function SettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reset Confirmation */}
+      {/* Reset */}
       <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reset All Data?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete your portfolio trades, watchlist, pinned tickers, and all saved preferences. This action cannot be undone.
+              This will permanently delete your local portfolio trades, watchlist, pinned tickers, and saved preferences. {user ? "Your account data in the cloud will not be affected." : "This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -246,8 +347,17 @@ export default function SettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Import Confirmation */}
-      <AlertDialog open={showImportConfirm} onOpenChange={(open) => { setShowImportConfirm(open); if (!open) { setPendingFile(null); setImportPreview(null); } }}>
+      {/* Import Confirm */}
+      <AlertDialog
+        open={showImportConfirm}
+        onOpenChange={(open) => {
+          setShowImportConfirm(open);
+          if (!open) {
+            setPendingFile(null);
+            setImportPreview(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Import Data?</AlertDialogTitle>
@@ -280,7 +390,9 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Settings</span>
-                      <span className="font-medium text-foreground">{importPreview.settings && Object.keys(importPreview.settings).length > 0 ? "Yes" : "No"}</span>
+                      <span className="font-medium text-foreground">
+                        {importPreview.settings && Object.keys(importPreview.settings).length > 0 ? "Yes" : "No"}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -289,8 +401,43 @@ export default function SettingsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleImportConfirm}>
-              Import
+            <AlertDialogAction onClick={handleImportConfirm}>Import</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Sign out */}
+      <AlertDialog open={showSignOutConfirm} onOpenChange={setShowSignOutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your data will remain saved on this device. You can sign back in anytime to resume syncing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Revoke device */}
+      <AlertDialog open={!!revokeTarget} onOpenChange={(o) => !o && setRevokeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this device?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The device will be removed from your authorized devices list. It will need to sign in again to sync.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => revokeTarget && handleRevoke(revokeTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

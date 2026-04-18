@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Trade {
   id: string;
@@ -25,7 +27,7 @@ export interface PortfolioHolding {
 
 const STORAGE_KEY = "ticker-portfolio";
 
-function loadTrades(): Trade[] {
+function loadLocalTrades(): Trade[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
@@ -34,32 +36,116 @@ function loadTrades(): Trade[] {
   }
 }
 
+function rowToTrade(d: any): Trade {
+  return {
+    id: d.id,
+    tickerId: d.ticker_id,
+    tickerSymbol: d.ticker_symbol,
+    tickerName: d.ticker_name,
+    tickerType: d.ticker_type,
+    type: d.trade_type,
+    price: Number(d.price),
+    quantity: Number(d.quantity),
+    date: d.trade_date,
+  };
+}
+
 export function usePortfolio() {
-  const [trades, setTrades] = useState<Trade[]>(loadTrades);
+  const { user } = useAuth();
+  const [trades, setTrades] = useState<Trade[]>(loadLocalTrades);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
   }, [trades]);
 
-  const addTrade = useCallback((trade: Omit<Trade, "id">) => {
-    setTrades((prev) => [...prev, { ...trade, id: crypto.randomUUID() }]);
-  }, []);
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
 
-  const removeTrade = useCallback((id: string) => {
-    setTrades((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+    const load = async () => {
+      const { data } = await supabase
+        .from("user_portfolio")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("trade_date", { ascending: true });
+      if (!active || !data) return;
+      setTrades(data.map(rowToTrade));
+    };
+    load();
 
-  const updateTrade = useCallback((id: string, updates: Partial<Omit<Trade, "id">>) => {
-    setTrades((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
-  }, []);
+    const channel = supabase
+      .channel(`user_portfolio:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_portfolio", filter: `user_id=eq.${user.id}` },
+        () => load()
+      )
+      .subscribe();
 
-  const removeHolding = useCallback((tickerId: string) => {
-    setTrades((prev) => prev.filter((t) => t.tickerId !== tickerId));
-  }, []);
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const addTrade = useCallback(
+    (trade: Omit<Trade, "id">) => {
+      const id = crypto.randomUUID();
+      setTrades((prev) => [...prev, { ...trade, id }]);
+      if (user) {
+        supabase
+          .from("user_portfolio")
+          .insert({
+            id,
+            user_id: user.id,
+            ticker_id: trade.tickerId,
+            ticker_symbol: trade.tickerSymbol,
+            ticker_name: trade.tickerName,
+            ticker_type: trade.tickerType,
+            trade_type: trade.type,
+            price: trade.price,
+            quantity: trade.quantity,
+            trade_date: trade.date,
+          })
+          .then();
+      }
+    },
+    [user]
+  );
+
+  const removeTrade = useCallback(
+    (id: string) => {
+      setTrades((prev) => prev.filter((t) => t.id !== id));
+      if (user) supabase.from("user_portfolio").delete().eq("id", id).then();
+    },
+    [user]
+  );
+
+  const updateTrade = useCallback(
+    (id: string, updates: Partial<Omit<Trade, "id">>) => {
+      setTrades((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+      if (user) {
+        const dbUpdates: any = {};
+        if (updates.price !== undefined) dbUpdates.price = updates.price;
+        if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+        if (updates.type !== undefined) dbUpdates.trade_type = updates.type;
+        if (updates.date !== undefined) dbUpdates.trade_date = updates.date;
+        supabase.from("user_portfolio").update(dbUpdates).eq("id", id).then();
+      }
+    },
+    [user]
+  );
+
+  const removeHolding = useCallback(
+    (tickerId: string) => {
+      setTrades((prev) => prev.filter((t) => t.tickerId !== tickerId));
+      if (user) supabase.from("user_portfolio").delete().eq("user_id", user.id).eq("ticker_id", tickerId).then();
+    },
+    [user]
+  );
 
   const holdings = useMemo<PortfolioHolding[]>(() => {
     const map = new Map<string, PortfolioHolding>();
-
     for (const trade of trades) {
       let h = map.get(trade.tickerId);
       if (!h) {
@@ -76,22 +162,16 @@ export function usePortfolio() {
         map.set(trade.tickerId, h);
       }
       h.trades.push(trade);
-
       if (trade.type === "buy") {
         h.totalCost += trade.price * trade.quantity;
         h.totalQuantity += trade.quantity;
       } else {
         h.totalQuantity -= trade.quantity;
-        // Reduce cost proportionally
-        if (h.totalQuantity > 0) {
-          h.totalCost = h.avgCostBasis * h.totalQuantity;
-        } else {
-          h.totalCost = 0;
-        }
+        if (h.totalQuantity > 0) h.totalCost = h.avgCostBasis * h.totalQuantity;
+        else h.totalCost = 0;
       }
       h.avgCostBasis = h.totalQuantity > 0 ? h.totalCost / h.totalQuantity : 0;
     }
-
     return Array.from(map.values()).filter((h) => h.totalQuantity > 0);
   }, [trades]);
 

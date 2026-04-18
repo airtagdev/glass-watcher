@@ -65,7 +65,7 @@ export function useWatchlist() {
     load();
 
     const channel = supabase
-      .channel(`user_watchlist:${user.id}`)
+      .channel(`user_watchlist:${user.id}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "user_watchlist", filter: `user_id=eq.${user.id}` },

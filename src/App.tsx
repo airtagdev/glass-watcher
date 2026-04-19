@@ -10,6 +10,7 @@ import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SyncGate } from "@/components/SyncGate";
 import { PageTransition } from "@/components/PageTransition";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import StocksPage from "./pages/StocksPage";
 import CryptoPage from "./pages/CryptoPage";
@@ -31,29 +32,31 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <DisclaimerModal />
-          <SyncGate />
-          <ScrollToTop />
-          <AppLoader>
-            <div className="min-h-screen bg-background">
-              <PageTransition>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/stocks" element={<StocksPage />} />
-                  <Route path="/crypto" element={<CryptoPage />} />
-                  <Route path="/portfolio" element={<PortfolioPage />} />
-                  <Route path="/news" element={<NewsPage />} />
-                  <Route path="/trending" element={<TrendingPage />} />
-                  <Route path="/market-map" element={<MarketMapPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </PageTransition>
-              <BottomNav />
-            </div>
-          </AppLoader>
+          <ThemeProvider>
+            <DisclaimerModal />
+            <SyncGate />
+            <ScrollToTop />
+            <AppLoader>
+              <div className="min-h-screen bg-background">
+                <PageTransition>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/stocks" element={<StocksPage />} />
+                    <Route path="/crypto" element={<CryptoPage />} />
+                    <Route path="/portfolio" element={<PortfolioPage />} />
+                    <Route path="/news" element={<NewsPage />} />
+                    <Route path="/trending" element={<TrendingPage />} />
+                    <Route path="/market-map" element={<MarketMapPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </PageTransition>
+                <BottomNav />
+              </div>
+            </AppLoader>
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

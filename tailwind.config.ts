@@ -102,6 +102,22 @@ export default {
           "0%": { opacity: "0", letterSpacing: "0.05em" },
           "100%": { opacity: "1", letterSpacing: "0.2em" },
         },
+        "flash-gain": {
+          "0%": { backgroundColor: "hsl(var(--gain) / 0.35)", color: "hsl(var(--gain))" },
+          "100%": { backgroundColor: "transparent" },
+        },
+        "flash-loss": {
+          "0%": { backgroundColor: "hsl(var(--loss) / 0.35)", color: "hsl(var(--loss))" },
+          "100%": { backgroundColor: "transparent" },
+        },
+        "scale-press": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(0.92)" },
+        },
+        "dot-pulse": {
+          "0%, 100%": { opacity: "1", boxShadow: "0 0 0 0 currentColor" },
+          "50%": { opacity: "0.6", boxShadow: "0 0 0 4px transparent" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +127,15 @@ export default {
         "pulse-glow": "pulse-glow 2.5s ease-in-out infinite",
         "letter-in": "letter-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
         "tagline-in": "tagline-in 1.2s ease-out 0.8s both",
+        "flash-gain": "flash-gain 0.8s ease-out",
+        "flash-loss": "flash-loss 0.8s ease-out",
+        "scale-press": "scale-press 0.2s ease-out",
+        "dot-pulse": "dot-pulse 1.8s ease-in-out infinite",
+      },
+      boxShadow: {
+        "gain-glow": "0 0 24px hsl(var(--gain-glow) / 0.4)",
+        "loss-glow": "0 0 24px hsl(var(--loss-glow) / 0.4)",
+        "inner-top": "inset 0 1px 0 0 hsl(0 0% 100% / 0.06)",
       },
     },
   },

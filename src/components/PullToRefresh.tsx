@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
 
 interface PullToRefreshProps {
   children: ReactNode;
@@ -63,12 +62,28 @@ export function PullToRefresh({ children, queryKeys }: PullToRefreshProps) {
       {(pullDistance > 0 || refreshing) && (
         <div
           className="flex items-center justify-center overflow-hidden"
-          style={{ height: refreshing ? 48 : pullDistance }}
+          style={{ height: refreshing ? 56 : pullDistance }}
         >
-          <RefreshCw
-            className={`w-5 h-5 text-primary transition-transform ${refreshing ? "animate-spin" : ""}`}
-            style={{ opacity: progress, transform: `rotate(${progress * 360}deg)` }}
-          />
+          {/* Branded spinner — three pulsing dots in primary color */}
+          <div
+            className="flex items-center gap-1.5"
+            style={{
+              opacity: progress,
+              transform: `scale(${0.6 + progress * 0.4})`,
+              transition: refreshing ? "none" : "transform 0.1s",
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className={`w-2 h-2 rounded-full bg-primary ${refreshing ? "animate-bounce" : ""}`}
+                style={{
+                  animationDelay: refreshing ? `${i * 0.12}s` : undefined,
+                  boxShadow: "0 0 12px hsl(var(--primary) / 0.6)",
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
       {children}

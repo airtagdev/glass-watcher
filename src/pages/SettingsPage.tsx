@@ -206,6 +206,38 @@ export default function SettingsPage() {
       {/* Preferences */}
       <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2 mt-3">Preferences</h2>
       <div className="flex flex-col gap-3">
+        {/* Theme switcher */}
+        <div className="glass-card p-4">
+          <p className="text-sm font-semibold text-foreground mb-1">Theme</p>
+          <p className="text-xs text-muted-foreground mb-3">Choose your visual style</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => update({ theme: "obsidian" })}
+              className={`relative p-3 rounded-xl border-2 transition-all overflow-hidden ${
+                settings.theme === "obsidian" ? "border-foreground" : "border-glass-border/40"
+              }`}
+              style={{
+                background: "linear-gradient(135deg, hsl(230 60% 18% / 0.6), hsl(270 50% 14% / 0.5) 50%, hsl(20 70% 18% / 0.4)), hsl(0 0% 8%)",
+              }}
+            >
+              <p className="text-xs font-bold text-white text-left relative z-10">Obsidian</p>
+              <p className="text-[10px] text-white/70 text-left relative z-10">Mono + mystery</p>
+            </button>
+            <button
+              onClick={() => update({ theme: "aurora" })}
+              className={`relative p-3 rounded-xl border-2 transition-all overflow-hidden ${
+                settings.theme === "aurora" ? "border-foreground" : "border-glass-border/40"
+              }`}
+              style={{
+                background: "linear-gradient(135deg, hsl(250 95% 50% / 0.5), hsl(280 90% 50% / 0.45) 50%, hsl(320 80% 50% / 0.5)), hsl(232 38% 12%)",
+              }}
+            >
+              <p className="text-xs font-bold text-white text-left relative z-10">Aurora</p>
+              <p className="text-[10px] text-white/70 text-left relative z-10">Purple gradient</p>
+            </button>
+          </div>
+        </div>
+
         <div className="glass-card p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">

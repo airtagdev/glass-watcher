@@ -8,8 +8,14 @@ const levelStyles = {
 
 export function ConfidenceBadge({ confidence }: { confidence: ConfidenceResult; compact?: boolean }) {
   return (
-    <p className="text-xs text-muted-foreground">
-      Confidence Score: <span className={`font-semibold ${levelStyles[confidence.level]}`}>{confidence.label}</span>
+    <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+      <span
+        className={`inline-block w-1.5 h-1.5 rounded-full ${levelStyles[confidence.level]} ${
+          confidence.level === "strong" ? "animate-dot-pulse" : ""
+        }`}
+        style={{ backgroundColor: "currentColor" }}
+      />
+      Confidence: <span className={`font-semibold ${levelStyles[confidence.level]}`}>{confidence.label}</span>
     </p>
   );
 }

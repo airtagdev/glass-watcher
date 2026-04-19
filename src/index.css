@@ -15,6 +15,7 @@
 
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 6%;
+    --primary-glow: 199 95% 65%;
 
     --secondary: 222 30% 16%;
     --secondary-foreground: 210 40% 96%;
@@ -34,8 +35,11 @@
 
     --radius: 1rem;
 
-    --gain: 142 71% 45%;
-    --loss: 0 84% 60%;
+    /* Refined semantic colors — mint gain, coral loss */
+    --gain: 152 76% 50%;
+    --loss: 4 90% 62%;
+    --gain-glow: 152 76% 50%;
+    --loss-glow: 4 90% 62%;
 
     --glass: 222 47% 12%;
     --glass-border: 222 30% 22%;
@@ -60,6 +64,46 @@
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Animated atmospheric gradient blobs */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, hsl(var(--primary) / 0.15), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 10%, hsl(var(--primary-glow) / 0.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 70% 90%, hsl(var(--gain) / 0.08), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 10% 90%, hsl(var(--loss) / 0.06), transparent 60%);
+    animation: drift 24s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  /* Subtle noise overlay to kill banding */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @keyframes drift {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(2%, -1%, 0) scale(1.05); }
+    100% { transform: translate3d(-1%, 2%, 0) scale(1.02); }
+  }
+
+  /* Tabular numerals for price stability */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
@@ -69,6 +113,21 @@
   }
   .glass-card {
     @apply bg-glass/40 backdrop-blur-2xl border border-glass-border/30 shadow-xl rounded-2xl;
+    position: relative;
+  }
+  /* Inner top highlight — lit-from-above effect */
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.08), transparent 40%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
   .text-gain {
     color: hsl(var(--gain));
@@ -81,5 +140,11 @@
   }
   .bg-loss {
     background-color: hsl(var(--loss) / 0.15);
+  }
+  .glow-gain {
+    text-shadow: 0 0 20px hsl(var(--gain-glow) / 0.5);
+  }
+  .glow-loss {
+    text-shadow: 0 0 20px hsl(var(--loss-glow) / 0.5);
   }
 }

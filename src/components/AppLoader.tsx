@@ -128,8 +128,20 @@ export function AppLoader({ children }: AppLoaderProps) {
   return (
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 px-8">
       <div className="flex flex-col items-center gap-2 mb-8">
-        <h1 className="text-4xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)] tracking-tight">Tradex</h1>
-        <p className="text-xs text-muted-foreground tracking-widest uppercase">Trade Smarter. Invest Better.</p>
+        <h1 className="text-5xl font-bold text-primary tracking-tight flex animate-pulse-glow" aria-label="Tradex">
+          {"Tradex".split("").map((letter, i) => (
+            <span
+              key={i}
+              className="inline-block animate-letter-in"
+              style={{ animationDelay: `${i * 0.08}s` }}
+            >
+              {letter}
+            </span>
+          ))}
+        </h1>
+        <p className="text-xs text-muted-foreground uppercase animate-tagline-in">
+          Trade Smarter. Invest Better.
+        </p>
       </div>
 
       <div className="w-full max-w-xs space-y-3">

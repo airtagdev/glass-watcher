@@ -225,6 +225,10 @@ export default function HomePage() {
                   onTogglePin={() => togglePin(id)}
                   canPin={canPin}
                   index={idx}
+                />
+              );
+            }
+
             if (watchlistItem.type === "crypto" && crypto) {
               return (
                 <TickerCard
@@ -241,6 +245,7 @@ export default function HomePage() {
                   isPinned={isPinned(id)}
                   onTogglePin={() => togglePin(id)}
                   canPin={canPin}
+                  index={idx}
                 />
               );
             }

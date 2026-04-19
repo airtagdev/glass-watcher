@@ -4,14 +4,18 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const SETTINGS_KEY = "app-settings";
 
+export type AppTheme = "obsidian" | "aurora";
+
 export interface AppSettings {
   showConfidenceScore: boolean;
   pushNotificationsEnabled: boolean;
+  theme: AppTheme;
 }
 
 const defaults: AppSettings = {
   showConfidenceScore: true,
   pushNotificationsEnabled: false,
+  theme: "obsidian",
 };
 
 function load(): AppSettings {

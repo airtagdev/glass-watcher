@@ -94,77 +94,103 @@ export default function HomePage() {
 
   return (
     <PullToRefresh>
-    <div className="px-4 pt-14 pb-24">
+    <div className="px-4 pt-12 pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-xs text-muted-foreground font-medium tracking-wider uppercase mb-1">Welcome back</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            <span className="text-gradient-primary">Tradex</span>
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
-          <Home className="w-5 h-5 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Home</h1>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass">
+            <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-gain animate-dot-pulse" : "bg-loss"}`} style={{ backgroundColor: marketOpen ? "hsl(var(--gain))" : "hsl(var(--loss))" }} />
+            <span className="text-[10px] font-semibold text-foreground">
+              {marketOpen ? "Open" : "Closed"}
+            </span>
+          </div>
+          <button
+            onClick={() => setShowAlerts(true)}
+            className="w-9 h-9 rounded-full glass flex items-center justify-center text-foreground active:animate-scale-press"
+          >
+            <Bell className="w-4 h-4" />
+          </button>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${marketOpen ? "bg-gain" : "bg-loss"}`} />
-          <span className={`text-xs font-semibold ${marketOpen ? "text-gain" : "text-loss"}`}>
-            Market {marketOpen ? "Open" : "Closed"}
-          </span>
-        </div>
-        <button
-          onClick={() => setShowAlerts(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-xs font-semibold text-foreground"
-        >
-          <Bell className="w-3.5 h-3.5" />
-          Alerts
-        </button>
       </div>
 
+      {/* Hero — Portfolio gradient card */}
+      <button
+        onClick={() => navigate("/portfolio")}
+        className="w-full glass-card-hero text-left mb-5 active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-start justify-between mb-4 relative z-10">
+          <div className="icon-chip">
+            <Briefcase className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="text-xs font-semibold text-foreground/80 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur">
+            View →
+          </span>
+        </div>
+        <p className="text-xs text-foreground/70 font-medium tracking-wide uppercase mb-1 relative z-10">Your Portfolio</p>
+        <p className="text-3xl font-bold tracking-tight text-foreground relative z-10 tabular">
+          Track trades & P&L
+        </p>
+      </button>
+
       {/* Index Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {/* S&P 500 */}
-        <div className="glass-card p-3.5">
-          <p className="text-[10px] text-muted-foreground mb-0.5">S&P 500</p>
-          <p className="text-lg font-bold text-foreground">
+        <div className="glass-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase">S&P 500</p>
+            {sp500Data && (
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${sp500Positive ? "bg-gain" : "bg-loss"}`}>
+                {sp500Positive ? <TrendingUp className="w-3 h-3 text-gain" /> : <TrendingDown className="w-3 h-3 text-loss" />}
+              </div>
+            )}
+          </div>
+          <p className="text-xl font-bold text-foreground tabular tracking-tight">
             {sp500Data ? formatCurrency(sp500Data.regularMarketPrice) : "—"}
           </p>
           {sp500Data && (
-            <div className={`flex items-center gap-1 mt-0.5 ${sp500Positive ? "text-gain" : "text-loss"}`}>
-              {sp500Positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span className="text-xs font-semibold">{formatPercent(sp500Change)}</span>
-            </div>
+            <p className={`text-xs font-semibold mt-1 tabular ${sp500Positive ? "text-gain" : "text-loss"}`}>
+              {sp500Positive ? "+" : ""}{formatPercent(sp500Change)}
+            </p>
           )}
         </div>
         {/* Nasdaq */}
-        <div className="glass-card p-3.5">
-          <p className="text-[10px] text-muted-foreground mb-0.5">NASDAQ</p>
-          <p className="text-lg font-bold text-foreground">
+        <div className="glass-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase">NASDAQ</p>
+            {nasdaqData && (
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${nasdaqPositive ? "bg-gain" : "bg-loss"}`}>
+                {nasdaqPositive ? <TrendingUp className="w-3 h-3 text-gain" /> : <TrendingDown className="w-3 h-3 text-loss" />}
+              </div>
+            )}
+          </div>
+          <p className="text-xl font-bold text-foreground tabular tracking-tight">
             {nasdaqData ? formatCurrency(nasdaqData.regularMarketPrice) : "—"}
           </p>
           {nasdaqData && (
-            <div className={`flex items-center gap-1 mt-0.5 ${nasdaqPositive ? "text-gain" : "text-loss"}`}>
-              {nasdaqPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span className="text-xs font-semibold">{formatPercent(nasdaqChange)}</span>
-            </div>
+            <p className={`text-xs font-semibold mt-1 tabular ${nasdaqPositive ? "text-gain" : "text-loss"}`}>
+              {nasdaqPositive ? "+" : ""}{formatPercent(nasdaqChange)}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Portfolio Button */}
-      <button
-        onClick={() => navigate("/portfolio")}
-        className="w-full glass-card p-4 mb-6 flex items-center gap-3 active:scale-[0.98] transition-transform"
-      >
-        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-          <Briefcase className="w-5 h-5 text-primary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold text-foreground">Portfolio</p>
-          <p className="text-xs text-muted-foreground">Track your trades & P&L</p>
-        </div>
-        <span className="text-muted-foreground text-lg">›</span>
-      </button>
-
       {/* Watchlist Section */}
-      <div className="flex items-center gap-2 mb-3">
-        <Eye className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Watchlist</h2>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Eye className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-bold text-foreground tracking-wide">Watchlist</h2>
+        </div>
+        {watchlist.length > 0 && (
+          <span className="text-[10px] font-semibold text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">
+            {watchlist.length}
+          </span>
+        )}
       </div>
 
       {watchlist.length === 0 ? (
@@ -175,7 +201,7 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {entries.map((entry) => {
+          {entries.map((entry, idx) => {
             const { watchlistItem, stock, crypto } = entry;
             const id = watchlistItem.id;
 
@@ -198,6 +224,7 @@ export default function HomePage() {
                   isPinned={isPinned(id)}
                   onTogglePin={() => togglePin(id)}
                   canPin={canPin}
+                  index={idx}
                 />
               );
             }
@@ -218,6 +245,7 @@ export default function HomePage() {
                   isPinned={isPinned(id)}
                   onTogglePin={() => togglePin(id)}
                   canPin={canPin}
+                  index={idx}
                 />
               );
             }

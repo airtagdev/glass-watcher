@@ -23,6 +23,9 @@ export interface PortfolioHolding {
   avgCostBasis: number;
   totalCost: number;
   trades: Trade[];
+  realizedPnl: number;
+  totalBought: number;
+  totalSold: number;
 }
 
 const STORAGE_KEY = "ticker-portfolio";

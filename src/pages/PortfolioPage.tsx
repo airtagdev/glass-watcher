@@ -28,12 +28,26 @@ import { CSS } from "@dnd-kit/utilities";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();
+  const {
+    categories,
+    addCategory,
+    renameCategory,
+    deleteCategory,
+    setHoldingCategory,
+    setHoldingsOrder,
+    getHoldingMeta,
+  } = usePortfolioMeta();
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [expandedHolding, setExpandedHolding] = useState<string | null>(null);
   const [addTradeForHolding, setAddTradeForHolding] = useState<PortfolioHolding | null>(null);
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
   const [deleteHoldingId, setDeleteHoldingId] = useState<string | null>(null);
+  const [showManageCategories, setShowManageCategories] = useState(false);
+  const [categoryPickerFor, setCategoryPickerFor] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const stockSymbols = holdings.filter((h) => h.tickerType === "stock").map((h) => h.tickerSymbol);
   const cryptoIds = holdings.filter((h) => h.tickerType === "crypto").map((h) => h.tickerId);

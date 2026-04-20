@@ -118,6 +118,15 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      <div className="flex items-center justify-end mb-3">
+        <button
+          onClick={() => setShowManageCategories(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <FolderPlus className="w-3.5 h-3.5" /> Manage Categories
+        </button>
+      </div>
+
       {holdings.length === 0 ? (
         <div className="glass-card p-8 text-center">
           <Briefcase className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
@@ -125,114 +134,23 @@ export default function PortfolioPage() {
           <p className="text-muted-foreground text-xs mt-1">Add a trade to get started.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {holdings.map((h) => {
-            const livePrice = getLivePrice(h);
-            const isClosed = h.totalQuantity <= 0;
-            const currentValue = !isClosed && livePrice ? livePrice * h.totalQuantity : null;
-            const unrealized = currentValue !== null ? currentValue - h.totalCost : null;
-            const unrealizedPct = unrealized !== null && h.totalCost > 0 ? (unrealized / h.totalCost) * 100 : null;
-            const realized = h.realizedPnl;
-            const isExpanded = expandedHolding === h.tickerId;
-
-            return (
-              <div key={h.tickerId} className="glass-card p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
-                    {h.tickerSymbol.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
-                      {isClosed && (
-                        <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted/40 text-muted-foreground font-semibold">
-                          Closed
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{h.tickerName}</p>
-                  </div>
-                  <div className="text-right mr-1">
-                    <p className="text-sm font-semibold text-foreground">
-                      {isClosed ? formatCurrency(realized) : currentValue ? formatCurrency(currentValue) : "—"}
-                    </p>
-                    {isClosed ? (
-                      <p className={`text-[10px] font-medium ${realized >= 0 ? "text-gain" : "text-loss"}`}>
-                        Realized
-                      </p>
-                    ) : unrealized !== null && unrealizedPct !== null && (
-                      <p className={`text-xs font-medium ${unrealized >= 0 ? "text-gain" : "text-loss"}`}>
-                        {unrealized >= 0 ? "+" : ""}{formatCurrency(unrealized)} ({formatPercent(unrealizedPct)})
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeleteHoldingId(h.tickerId); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-loss/10 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-loss" />
-                  </button>
-                </div>
-                <div className="mt-3 pt-3 border-t border-glass-border/30 grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Shares</p>
-                    <p className="text-xs font-semibold text-foreground">{h.totalQuantity.toFixed(4)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Avg Cost</p>
-                    <p className="text-xs font-semibold text-foreground">{isClosed ? "—" : formatCurrency(h.avgCostBasis)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Live Price</p>
-                    <p className="text-xs font-semibold text-foreground">{livePrice ? formatCurrency(livePrice) : "—"}</p>
-                  </div>
-                </div>
-                <div className="mt-2 pt-2 border-t border-glass-border/20 grid grid-cols-2 gap-2 text-center">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Realized P/L</p>
-                      <p className={`text-xs font-semibold ${realized >= 0 ? "text-gain" : "text-loss"}`}>
-                        {realized >= 0 ? "+" : ""}{formatCurrency(realized)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Unrealized P/L</p>
-                      <p className={`text-xs font-semibold ${(unrealized ?? 0) >= 0 ? "text-gain" : "text-loss"}`}>
-                        {isClosed || unrealized === null ? "—" : `${unrealized >= 0 ? "+" : ""}${formatCurrency(unrealized)}`}
-                      </p>
-                    </div>
-                </div>
-
-                {/* Expand/collapse trades */}
-                <button
-                  onClick={() => setExpandedHolding(isExpanded ? null : h.tickerId)}
-                  className="w-full mt-3 pt-2 border-t border-glass-border/20 flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  {h.trades.length} trade{h.trades.length !== 1 ? "s" : ""}
-                </button>
-
-                {isExpanded && (
-                  <div className="mt-2 flex flex-col gap-2">
-                    {h.trades.map((trade) => (
-                      <TradeRow
-                        key={trade.id}
-                        trade={trade}
-                        onEdit={() => setEditingTrade(trade)}
-                        onDelete={() => setDeleteTradeId(trade.id)}
-                      />
-                    ))}
-                    <button
-                      onClick={() => setAddTradeForHolding(h)}
-                      className="w-full py-2 rounded-xl border border-dashed border-primary/30 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Trade
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <CategorizedHoldings
+          holdings={holdings}
+          categories={categories}
+          getHoldingMeta={getHoldingMeta}
+          getLivePrice={getLivePrice}
+          sensors={sensors}
+          setHoldingsOrder={setHoldingsOrder}
+          collapsedCategories={collapsedCategories}
+          setCollapsedCategories={setCollapsedCategories}
+          expandedHolding={expandedHolding}
+          setExpandedHolding={setExpandedHolding}
+          setEditingTrade={setEditingTrade}
+          setDeleteTradeId={setDeleteTradeId}
+          setDeleteHoldingId={setDeleteHoldingId}
+          setAddTradeForHolding={setAddTradeForHolding}
+          setCategoryPickerFor={setCategoryPickerFor}
+        />
       )}
 
       {showAddTrade && (

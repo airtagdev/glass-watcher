@@ -1,14 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio, Trade, PortfolioHolding } from "@/hooks/usePortfolio";
 import { useStockQuotes, StockQuote } from "@/hooks/useStockData";
 import { useCryptosByIds, CryptoTicker } from "@/hooks/useCryptoData";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { Briefcase, Plus, TrendingUp, TrendingDown, X, MoreVertical, Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Briefcase, Plus, TrendingUp, TrendingDown, X, MoreVertical, Pencil, Trash2, ChevronDown, ChevronUp, GripVertical, FolderPlus, Tag, Folder } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useStockSearch } from "@/hooks/useStockData";
 import { useCryptoSearch } from "@/hooks/useCryptoData";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { HoldToDeleteButton } from "@/components/HoldToDeleteButton";
+import { usePortfolioMeta, PortfolioCategory } from "@/hooks/usePortfolioMeta";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export default function PortfolioPage() {
   const { holdings, trades, addTrade, removeTrade, updateTrade, removeHolding } = usePortfolio();

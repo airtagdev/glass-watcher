@@ -161,6 +161,9 @@ export function usePortfolio() {
           avgCostBasis: 0,
           totalCost: 0,
           trades: [],
+          realizedPnl: 0,
+          totalBought: 0,
+          totalSold: 0,
         };
         map.set(trade.tickerId, h);
       }
@@ -168,14 +171,20 @@ export function usePortfolio() {
       if (trade.type === "buy") {
         h.totalCost += trade.price * trade.quantity;
         h.totalQuantity += trade.quantity;
+        h.totalBought += trade.quantity;
       } else {
+        // Realized P/L based on avg cost at the time of sell
+        const sellQty = Math.min(trade.quantity, h.totalQuantity);
+        h.realizedPnl += (trade.price - h.avgCostBasis) * sellQty;
+        h.totalSold += trade.quantity;
         h.totalQuantity -= trade.quantity;
         if (h.totalQuantity > 0) h.totalCost = h.avgCostBasis * h.totalQuantity;
         else h.totalCost = 0;
       }
       h.avgCostBasis = h.totalQuantity > 0 ? h.totalCost / h.totalQuantity : 0;
     }
-    return Array.from(map.values()).filter((h) => h.totalQuantity > 0);
+    // Keep all holdings that have any trade history (so closed positions still display realized P/L)
+    return Array.from(map.values());
   }, [trades]);
 
   return { trades, holdings, addTrade, removeTrade, updateTrade, removeHolding };

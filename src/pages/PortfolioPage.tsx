@@ -33,13 +33,16 @@ export default function PortfolioPage() {
 
   let totalValue = 0;
   let totalCost = 0;
+  let totalRealized = 0;
   for (const h of holdings) {
     const live = getLivePrice(h);
     if (live) totalValue += live * h.totalQuantity;
     totalCost += h.totalCost;
+    totalRealized += h.realizedPnl;
   }
-  const totalPnl = totalValue - totalCost;
-  const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+  const totalUnrealized = totalValue - totalCost;
+  const totalPnl = totalUnrealized + totalRealized;
+  const totalPnlPercent = totalCost > 0 ? (totalUnrealized / totalCost) * 100 : 0;
 
   return (
     <PullToRefresh>

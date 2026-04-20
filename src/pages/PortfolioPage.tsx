@@ -223,6 +223,29 @@ export default function PortfolioPage() {
           </div>
         </div>
       )}
+
+      {showManageCategories && (
+        <ManageCategoriesModal
+          categories={categories}
+          onAdd={addCategory}
+          onRename={renameCategory}
+          onDelete={deleteCategory}
+          onClose={() => setShowManageCategories(false)}
+        />
+      )}
+
+      {categoryPickerFor && (
+        <CategoryPickerModal
+          categories={categories}
+          currentCategoryId={getHoldingMeta(categoryPickerFor).categoryId}
+          onSelect={(catId) => {
+            setHoldingCategory(categoryPickerFor, catId);
+            setCategoryPickerFor(null);
+          }}
+          onAddCategory={addCategory}
+          onClose={() => setCategoryPickerFor(null)}
+        />
+      )}
     </div>
     </PullToRefresh>
   );

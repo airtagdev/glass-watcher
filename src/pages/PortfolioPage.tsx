@@ -157,8 +157,7 @@ export default function PortfolioPage() {
                     <p className="text-xs font-semibold text-foreground">{livePrice ? formatCurrency(livePrice) : "—"}</p>
                   </div>
                 </div>
-                {(realized !== 0 || isClosed) && (
-                  <div className="mt-2 pt-2 border-t border-glass-border/20 grid grid-cols-2 gap-2 text-center">
+                <div className="mt-2 pt-2 border-t border-glass-border/20 grid grid-cols-2 gap-2 text-center">
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Realized P/L</p>
                       <p className={`text-xs font-semibold ${realized >= 0 ? "text-gain" : "text-loss"}`}>
@@ -171,8 +170,7 @@ export default function PortfolioPage() {
                         {isClosed || unrealized === null ? "—" : `${unrealized >= 0 ? "+" : ""}${formatCurrency(unrealized)}`}
                       </p>
                     </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Expand/collapse trades */}
                 <button

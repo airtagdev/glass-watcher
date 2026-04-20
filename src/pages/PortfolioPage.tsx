@@ -33,13 +33,16 @@ export default function PortfolioPage() {
 
   let totalValue = 0;
   let totalCost = 0;
+  let totalRealized = 0;
   for (const h of holdings) {
     const live = getLivePrice(h);
     if (live) totalValue += live * h.totalQuantity;
     totalCost += h.totalCost;
+    totalRealized += h.realizedPnl;
   }
-  const totalPnl = totalValue - totalCost;
-  const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+  const totalUnrealized = totalValue - totalCost;
+  const totalPnl = totalUnrealized + totalRealized;
+  const totalPnlPercent = totalCost > 0 ? (totalUnrealized / totalCost) * 100 : 0;
 
   return (
     <PullToRefresh>
@@ -69,6 +72,20 @@ export default function PortfolioPage() {
             ({formatPercent(totalPnlPercent)})
           </span>
         </div>
+        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-glass-border/30">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Unrealized</p>
+            <p className={`text-sm font-semibold ${totalUnrealized >= 0 ? "text-gain" : "text-loss"}`}>
+              {totalUnrealized >= 0 ? "+" : ""}{formatCurrency(totalUnrealized)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Realized</p>
+            <p className={`text-sm font-semibold ${totalRealized >= 0 ? "text-gain" : "text-loss"}`}>
+              {totalRealized >= 0 ? "+" : ""}{formatCurrency(totalRealized)}
+            </p>
+          </div>
+        </div>
       </div>
 
       {holdings.length === 0 ? (
@@ -81,9 +98,11 @@ export default function PortfolioPage() {
         <div className="flex flex-col gap-3">
           {holdings.map((h) => {
             const livePrice = getLivePrice(h);
-            const currentValue = livePrice ? livePrice * h.totalQuantity : null;
-            const pnl = currentValue ? currentValue - h.totalCost : null;
-            const pnlPercent = pnl && h.totalCost > 0 ? (pnl / h.totalCost) * 100 : null;
+            const isClosed = h.totalQuantity <= 0;
+            const currentValue = !isClosed && livePrice ? livePrice * h.totalQuantity : null;
+            const unrealized = currentValue !== null ? currentValue - h.totalCost : null;
+            const unrealizedPct = unrealized !== null && h.totalCost > 0 ? (unrealized / h.totalCost) * 100 : null;
+            const realized = h.realizedPnl;
             const isExpanded = expandedHolding === h.tickerId;
 
             return (
@@ -93,16 +112,27 @@ export default function PortfolioPage() {
                     {h.tickerSymbol.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold text-foreground">{h.tickerSymbol.toUpperCase()}</p>
+                      {isClosed && (
+                        <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted/40 text-muted-foreground font-semibold">
+                          Closed
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{h.tickerName}</p>
                   </div>
                   <div className="text-right mr-1">
                     <p className="text-sm font-semibold text-foreground">
-                      {currentValue ? formatCurrency(currentValue) : "—"}
+                      {isClosed ? formatCurrency(realized) : currentValue ? formatCurrency(currentValue) : "—"}
                     </p>
-                    {pnl !== null && pnlPercent !== null && (
-                      <p className={`text-xs font-medium ${pnl >= 0 ? "text-gain" : "text-loss"}`}>
-                        {pnl >= 0 ? "+" : ""}{formatCurrency(pnl)} ({formatPercent(pnlPercent)})
+                    {isClosed ? (
+                      <p className={`text-[10px] font-medium ${realized >= 0 ? "text-gain" : "text-loss"}`}>
+                        Realized
+                      </p>
+                    ) : unrealized !== null && unrealizedPct !== null && (
+                      <p className={`text-xs font-medium ${unrealized >= 0 ? "text-gain" : "text-loss"}`}>
+                        {unrealized >= 0 ? "+" : ""}{formatCurrency(unrealized)} ({formatPercent(unrealizedPct)})
                       </p>
                     )}
                   </div>
@@ -120,13 +150,29 @@ export default function PortfolioPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Avg Cost</p>
-                    <p className="text-xs font-semibold text-foreground">{formatCurrency(h.avgCostBasis)}</p>
+                    <p className="text-xs font-semibold text-foreground">{isClosed ? "—" : formatCurrency(h.avgCostBasis)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Live Price</p>
                     <p className="text-xs font-semibold text-foreground">{livePrice ? formatCurrency(livePrice) : "—"}</p>
                   </div>
                 </div>
+                {(realized !== 0 || isClosed) && (
+                  <div className="mt-2 pt-2 border-t border-glass-border/20 grid grid-cols-2 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Realized P/L</p>
+                      <p className={`text-xs font-semibold ${realized >= 0 ? "text-gain" : "text-loss"}`}>
+                        {realized >= 0 ? "+" : ""}{formatCurrency(realized)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Unrealized P/L</p>
+                      <p className={`text-xs font-semibold ${(unrealized ?? 0) >= 0 ? "text-gain" : "text-loss"}`}>
+                        {isClosed || unrealized === null ? "—" : `${unrealized >= 0 ? "+" : ""}${formatCurrency(unrealized)}`}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Expand/collapse trades */}
                 <button

@@ -72,6 +72,20 @@ export default function PortfolioPage() {
             ({formatPercent(totalPnlPercent)})
           </span>
         </div>
+        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-glass-border/30">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Unrealized</p>
+            <p className={`text-sm font-semibold ${totalUnrealized >= 0 ? "text-gain" : "text-loss"}`}>
+              {totalUnrealized >= 0 ? "+" : ""}{formatCurrency(totalUnrealized)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Realized</p>
+            <p className={`text-sm font-semibold ${totalRealized >= 0 ? "text-gain" : "text-loss"}`}>
+              {totalRealized >= 0 ? "+" : ""}{formatCurrency(totalRealized)}
+            </p>
+          </div>
+        </div>
       </div>
 
       {holdings.length === 0 ? (

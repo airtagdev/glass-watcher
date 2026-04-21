@@ -129,6 +129,44 @@ async function fetchStockQuote(symbol: string) {
   }
 }
 
+async function fetchChart(symbol: string, interval: string, range: string) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}&includePrePost=false`;
+    const res = await fetch(url, { headers: YAHOO_HEADERS });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data.chart?.result?.[0];
+    if (!result) return null;
+    const timestamp: number[] = result.timestamp || [];
+    const q = result.indicators?.quote?.[0] || {};
+    return {
+      symbol,
+      interval,
+      range,
+      timestamp,
+      open: q.open || [],
+      high: q.high || [],
+      low: q.low || [],
+      close: q.close || [],
+      volume: q.volume || [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+const FOREX_SYMBOLS = [
+  "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "USDCHF=X",
+  "NZDUSD=X", "EURGBP=X", "EURJPY=X", "GBPJPY=X", "EURCHF=X", "AUDJPY=X",
+  "CADJPY=X", "CHFJPY=X", "EURAUD=X", "EURCAD=X", "GBPAUD=X", "GBPCAD=X",
+];
+
+const FUTURES_SYMBOLS = [
+  "ES=F", "NQ=F", "YM=F", "RTY=F",
+  "CL=F", "GC=F", "SI=F", "NG=F", "HG=F", "ZB=F", "ZN=F", "ZC=F", "ZS=F", "ZW=F",
+  "^GSPC", "^DJI", "^IXIC", "^RUT", "^VIX", "^FTSE", "^N225", "^HSI", "^GDAXI", "^FCHI",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -151,6 +189,29 @@ serve(async (req) => {
       return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (action === "chart") {
+      const symbol = url.searchParams.get("symbol") || "";
+      const interval = url.searchParams.get("interval") || "1d";
+      const range = url.searchParams.get("range") || "1y";
+      if (!symbol) {
+        return new Response(JSON.stringify({ error: "Missing symbol" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const result = await fetchChart(symbol, interval, range);
+      return new Response(JSON.stringify(result || { timestamp: [], open: [], high: [], low: [], close: [], volume: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "forex") {
+      const results = (await Promise.all(FOREX_SYMBOLS.map(fetchStockQuote))).filter(Boolean);
+      return new Response(JSON.stringify(results), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "futures") {
+      const results = (await Promise.all(FUTURES_SYMBOLS.map(fetchStockQuote))).filter(Boolean);
+      return new Response(JSON.stringify(results), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "search") {

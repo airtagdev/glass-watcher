@@ -6,7 +6,7 @@ export interface WatchlistItem {
   id: string;
   symbol: string;
   name: string;
-  type: "stock" | "crypto";
+  type: "stock" | "crypto" | "forex" | "futures";
 }
 
 const STORAGE_KEY = "ticker-watchlist";

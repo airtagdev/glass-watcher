@@ -22,6 +22,8 @@ import MarketMapPage from "./pages/MarketMapPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ForexPage from "./pages/ForexPage";
+import FuturesPage from "./pages/FuturesPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ const App = () => (
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/trending" element={<TrendingPage />} />
                     <Route path="/market-map" element={<MarketMapPage />} />
+                    <Route path="/forex" element={<ForexPage />} />
+                    <Route path="/futures" element={<FuturesPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />

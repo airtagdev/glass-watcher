@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles, Send, Loader2 } from "lucide-react";
+import { X, Plus, Check, TrendingUp, TrendingDown, Sparkles, Send, Loader2, BarChart3 } from "lucide-react";
 import { formatCurrency, formatLargeNumber, formatPercent, formatVolume } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { computeConfidence } from "@/lib/confidenceScore";
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 import { useStockDetail } from "@/hooks/useStockData";
 import { useSettings } from "@/hooks/useSettings";
+import { TickerChartFullscreen } from "@/components/TickerChartFullscreen";
 
 interface TickerDetailProps {
   symbol: string;
@@ -21,7 +22,8 @@ interface TickerDetailProps {
   dayLow?: number;
   imageUrl?: string;
   trailingPE?: number | null;
-  tickerType?: "stock" | "crypto";
+  tickerType?: "stock" | "crypto" | "forex" | "futures";
+  chartSymbol?: string;
   postMarketPrice?: number | null;
   postMarketChange?: number | null;
   postMarketChangePercent?: number | null;
@@ -48,6 +50,7 @@ export function TickerDetail({
   imageUrl,
   trailingPE,
   tickerType,
+  chartSymbol,
   postMarketPrice,
   postMarketChange,
   postMarketChangePercent,
@@ -66,6 +69,7 @@ export function TickerDetail({
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const [chartOpen, setChartOpen] = useState(false);
 
   const askAI = async () => {
     if (!aiQuery.trim() || aiLoading) return;
@@ -209,6 +213,13 @@ export function TickerDetail({
               />
             </div>
             <button
+              onClick={() => setChartOpen(true)}
+              className="w-9 h-9 rounded-xl bg-secondary text-foreground flex items-center justify-center shrink-0 hover:bg-secondary/80"
+              title="View chart"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </button>
+            <button
               onClick={askAI}
               disabled={aiLoading || !aiQuery.trim()}
               className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-40"
@@ -242,6 +253,14 @@ export function TickerDetail({
           )}
         </button>
       </div>
+      {chartOpen && (
+        <TickerChartFullscreen
+          symbol={chartSymbol || symbol}
+          name={name}
+          showVolume={tickerType !== "forex"}
+          onClose={() => setChartOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createChart, ColorType, CandlestickSeries, HistogramSeries, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { X, Loader2 } from "lucide-react";
 import { useChartData } from "@/hooks/useChartData";
@@ -140,8 +141,17 @@ export function TickerChartFullscreen({ symbol, name, showVolume = true, onClose
     chartRef.current?.timeScale().fitContent();
   }, [data, cfg.label, showVolume]);
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-background flex flex-col">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] bg-background flex flex-col touch-none"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
         <div className="min-w-0">
@@ -189,6 +199,7 @@ export function TickerChartFullscreen({ symbol, name, showVolume = true, onClose
         )}
         <div ref={containerRef} className="absolute inset-0" />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

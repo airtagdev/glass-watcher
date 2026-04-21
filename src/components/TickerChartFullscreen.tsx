@@ -155,14 +155,8 @@ export function TickerChartFullscreen({ symbol, name, showVolume = true, onClose
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-background flex flex-col touch-none"
+      className="fixed inset-0 z-[100] bg-background flex flex-col"
       onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">

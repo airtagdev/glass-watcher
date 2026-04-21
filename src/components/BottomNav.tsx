@@ -1,4 +1,4 @@
-import { Home, TrendingUp, Bitcoin, Briefcase, MoreHorizontal, Newspaper, Flame, Map, Settings } from "lucide-react";
+import { Home, TrendingUp, Bitcoin, Briefcase, MoreHorizontal, Newspaper, Flame, Map, Settings, DollarSign, LineChart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,8 @@ const mainTabs = [
 ];
 
 const moreTabs = [
+  { path: "/forex", icon: DollarSign, label: "Forex" },
+  { path: "/futures", icon: LineChart, label: "Futures" },
   { path: "/news", icon: Newspaper, label: "News" },
   { path: "/trending", icon: Flame, label: "Trending" },
   { path: "/market-map", icon: Map, label: "Market Map" },

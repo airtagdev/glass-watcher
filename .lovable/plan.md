@@ -1,61 +1,45 @@
 
 
-The user is asking an open-ended aesthetic question. Let me explore the current app briefly to give grounded suggestions.
+## Add Candlestick Charts + Forex & Futures
 
-Looking at the current state:
-- Dark theme (deep blue `222 47% 6%`) with glass morphism
-- Primary blue `217 91% 60%`
-- SF Pro font stack, Apple-like
-- Bottom nav, ticker cards with glass-card style
-- Already has some animations (fade-in, pulse-glow, letter-in for loader)
+### What you'll get
 
-The app is functional but could feel more premium. Here's a focused plan to elevate aesthetics without breaking the existing identity.
+1. A **"View Chart"** button on the ticker detail card (stocks, crypto, forex, futures) that opens a fullscreen TradingView-style candlestick chart with selectable time intervals.
+2. Two new asset categories: **Forex** (e.g., EUR/USD, GBP/USD) and **Futures/Indices** (e.g., ES=F, NQ=F, GC=F, ^GSPC), each with their own page accessible via the More menu.
 
-## Aesthetic Polish Plan
+### Fullscreen chart behavior
 
-A cohesive set of upgrades to make Tradex feel more premium, fluid, and "Apple-grade" — building on the existing dark-glass identity rather than replacing it.
+- Fullscreen overlay with candlesticks, volume bars below, crosshair, pinch/scroll zoom, pan.
+- Interval selector (chip row): `1m, 5m, 15m, 30m, 1h, 4h, 1D, 1W, 1M`.
+- Range selector adapts to interval (e.g., 1m → 1d, 1h → 1mo, 1D → 1y, max 1y per your spec).
+- Close button returns to the ticker detail card.
+- Works for stocks, crypto, forex, and futures using the same Yahoo backend.
 
-### 1. Depth & atmosphere
-- Add a subtle **animated gradient background** (slow-drifting radial blobs in primary/gain/loss hues, low opacity) behind the app for depth instead of flat `#0a0f1c`.
-- Introduce a soft **noise/grain overlay** (1-2% opacity) to kill banding on dark gradients — a signature of premium dark UIs.
-- Strengthen glass cards with a faint inner highlight (top 1px white/5%) so they feel lit from above.
+### How it works (technical)
 
-### 2. Color & semantic refinement
-- Tighten the gain/loss palette: gain → mint-leaning green, loss → coral-leaning red (less "bootstrap"). Add `gain-glow` / `loss-glow` shadow tokens for price changes.
-- Add a **price-flash animation** — when a price updates, briefly tint the number green/red then fade. Makes the app feel live.
+**Backend — extend `stock-proxy`:**
+- New `action=chart` endpoint accepting `symbol`, `interval`, `range`. Calls Yahoo `v8/finance/chart` (already used) and returns `{ timestamp[], open[], high[], low[], close[], volume[] }`.
+- New `action=forex` endpoint returning a curated list of pairs (`EURUSD=X`, `GBPUSD=X`, `USDJPY=X`, `AUDUSD=X`, `USDCAD=X`, `USDCHF=X`, `NZDUSD=X`, `EURGBP=X`, `EURJPY=X`, etc.) using the existing quote fetch.
+- New `action=futures` endpoint returning curated futures + indices (`ES=F`, `NQ=F`, `YM=F`, `RTY=F`, `CL=F`, `GC=F`, `SI=F`, `NG=F`, `HG=F`, `ZB=F`, `^GSPC`, `^DJI`, `^IXIC`, `^RUT`, `^VIX`, `^FTSE`, `^N225`).
 
-### 3. Typography rhythm
-- Use **tabular numerals** (`font-variant-numeric: tabular-nums`) on all prices/percentages so digits don't jitter on update.
-- Slightly increase letter-spacing on uppercase tickers (`tracking-wide`) and tighten on large numbers (`tracking-tight`).
-- Larger, bolder hero numbers on the home/portfolio totals for visual hierarchy.
+**Frontend:**
+- New hook `useChartData(symbol, interval, range)` in `src/hooks/useChartData.ts` — react-query, 30s refetch on intraday intervals.
+- New `useForexData.ts` and `useFuturesData.ts` mirroring `useStockData.ts` patterns (popular list + search reused via `stock-proxy` search).
+- New component `src/components/TickerChartFullscreen.tsx` — fullscreen modal rendering candlesticks. **Library:** `lightweight-charts` (Trading­View's official, ~45KB, free, performant). Includes interval chip row, volume pane, crosshair, hover tooltip with OHLC.
+- Update `src/components/TickerDetail.tsx`: add a "View Chart" button (line/bar-chart icon) next to the AI input area; on click, opens `TickerChartFullscreen`.
+- New pages `src/pages/ForexPage.tsx` and `src/pages/FuturesPage.tsx` (clones of `StocksPage.tsx` shape, passing `tickerType="forex"|"futures"` to `TickerDetail`).
+- Update `src/App.tsx` with two new routes.
+- Update `src/components/BottomNav.tsx` `moreTabs` to include Forex (DollarSign icon) and Futures (LineChart icon).
+- Update `TickerDetail` props to accept `tickerType: "stock" | "crypto" | "forex" | "futures"` so the chart endpoint picks the right symbol shape (Yahoo handles all four natively, just pass-through).
 
-### 4. Motion & micro-interactions
-- Stagger list entrance: ticker cards fade-in with 30ms delay per index instead of all at once.
-- Replace abrupt tab switches with a **shared layout fade+slide** (page transitions via a simple wrapper).
-- Bottom nav: animated active pill that slides between icons (Framer Motion `layoutId`), gentle haptic-style scale on tap.
-- Pull-to-refresh: add a custom branded spinner instead of the default.
+### Files
 
-### 5. Iconography & detail
-- Add **token/coin icons consistently** with a soft drop shadow + subtle ring on hover.
-- Confidence badges: switch to small dot + label combo with the dot pulsing for "high confidence."
-- Empty states: replace plain text with a small illustrated/iconographic block (e.g., chart-line icon + helpful copy).
+**New:** `src/components/TickerChartFullscreen.tsx`, `src/hooks/useChartData.ts`, `src/hooks/useForexData.ts`, `src/hooks/useFuturesData.ts`, `src/pages/ForexPage.tsx`, `src/pages/FuturesPage.tsx`
+**Edited:** `supabase/functions/stock-proxy/index.ts`, `src/components/TickerDetail.tsx`, `src/components/BottomNav.tsx`, `src/App.tsx`, `package.json` (adds `lightweight-charts`)
 
-### 6. Bottom nav refresh
-- Frosted glass with stronger backdrop-blur, thin top border using gradient (transparent → glass-border → transparent).
-- Active item: icon scales slightly, label appears, animated pill background.
+### Notes
 
-### 7. Loading & skeletons
-- Replace any spinners inside the app with **shimmer skeletons** matching card shapes (you already have `shimmer` keyframe — wire it in).
-
-### Files likely touched
-- `src/index.css` — gradient bg, noise utility, tabular-nums, gain/loss tokens
-- `tailwind.config.ts` — new keyframes (price-flash, nav-pill), shadow tokens
-- `src/components/BottomNav.tsx` — animated active pill
-- `src/components/TickerCard.tsx` — staggered entrance, price-flash, tabular nums
-- `src/components/PullToRefresh.tsx` — branded spinner
-- `src/App.tsx` — page transition wrapper
-- New `src/components/Skeletons.tsx` — shimmer skeletons
-
-### Scope question
-This is a buffet — happy to do all of it, or you can pick the items that matter most. Suggest starting with **1, 2, 4, and 6** for the biggest visual lift with the least risk.
+- All data flows through the existing `stock-proxy` edge function — no new API keys needed.
+- Forex/futures use Yahoo's `=X` and `=F` symbol conventions; quotes, search, and charts all work via the same endpoint.
+- Volume is hidden for forex (Yahoo doesn't return it for FX pairs).
 

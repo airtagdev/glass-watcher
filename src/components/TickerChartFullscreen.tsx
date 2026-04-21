@@ -49,6 +49,18 @@ export function TickerChartFullscreen({ symbol, name, showVolume = true, onClose
       rightPriceScale: { borderColor: "hsl(var(--border) / 0.5)" },
       timeScale: { borderColor: "hsl(var(--border) / 0.5)", timeVisible: true, secondsVisible: false },
       crosshair: { mode: 1 },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        axisPressedMouseMove: { time: true, price: false },
+        mouseWheel: true,
+        pinch: true,
+      },
+      kineticScroll: { touch: true, mouse: true },
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
       autoSize: true,
